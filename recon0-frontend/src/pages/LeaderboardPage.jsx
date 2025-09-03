@@ -1,72 +1,82 @@
 import React, { useState, useEffect } from 'react';
 
-export default function LeaderboardPage() {
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const LeaderboardPage = () => {
+    const [leaderboardData, setLeaderboardData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetch('http://localhost:3001/api/leaderboard')
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
-        setLeaderboard(data);
-        setLoading(false);
-      })
-      // eslint-disable-next-line no-unused-vars
-      .catch(error => {
-        setError("Could not load the leaderboard.");
-        setLoading(false);
-      });
-  }, []);
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                setLoading(true);
+                setError('');
+                const response = await fetch('http://localhost:3001/api/v1/leaderboard');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    setLeaderboardData(result.data);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch leaderboard data.');
+                }
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  if (loading) return <p>Loading leaderboard...</p>;
-  if (error) return <div className="alert alert-danger">Error: {error}</div>;
+        fetchLeaderboard();
+    }, []);
 
-  return (
-    <div>
-      <div className="mb-4">
-        <h1 className="display-5 fw-bolder">Leaderboard</h1>
-        <p className="text-white">Top security researchers on the platform.</p>
-      </div>
+    const renderContent = () => {
+        if (loading) return <p>Loading leaderboard...</p>;
+        if (error) return <div className="alert alert-danger">Error: {error}</div>;
 
-      <div className="card text-white">
-        <div className="table-responsive">
-          <table className="table table-dark table-hover mb-0 align-middle">
-            <thead>
-              <tr>
-                <th scope="col" style={{width: '10%'}}>Rank</th>
-                <th scope="col">Hacker</th>
-                <th scope="col">Reports</th>
-                <th scope="col">Reputation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.map(hacker => (
-                <tr key={hacker.rank}>
-                  <td className="fw-bold fs-5">{hacker.rank}</td>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <img 
-                        src={`https://placehold.co/40x40/1F2937/34D399?text=${hacker.username.charAt(0).toUpperCase()}`} 
-                        alt="" 
-                        width="40" 
-                        height="40" 
-                        className="rounded-circle me-3" 
-                      />
-                      <span className="fw-bold">{hacker.username}</span>
+        return (
+            <div className="card shadow-sm">
+                <div className="card-body">
+                    <div className="table-responsive">
+                        <table className="table table-hover align-middle">
+                            <thead className="table-dark">
+                                <tr>
+                                    <th scope="col" style={{ width: '10%' }}>Rank</th>
+                                    <th scope="col" style={{ width: '50%' }}>Hacker</th>
+                                    <th scope="col" style={{ width: '20%' }}>Reports Resolved</th>
+                                    <th scope="col" style={{ width: '20%' }}>Reputation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leaderboardData.map((hacker) => (
+                                    <tr key={hacker.rank}>
+                                        <th scope="row" className="fs-5">{hacker.rank}</th>
+                                        <td>
+                                            <div className="d-flex align-items-center">
+                                                <div className="avatar me-3">{hacker.hacker.username.charAt(0).toUpperCase()}</div>
+                                                <span className="fw-bold">{hacker.hacker.username}</span>
+                                            </div>
+                                        </td>
+                                        <td>{hacker.reports_resolved}</td>
+                                        <td className="fw-bold text-primary">{hacker.reputation_points.toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                  </td>
-                  <td>{hacker.reports}</td>
-                  <td className="fw-bold" style={{color: 'var(--accent-green)'}}>{hacker.reputation.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="container mt-5">
+            <h2 className="mb-4">Leaderboard</h2>
+            <p className="text-muted mb-4">Top security researchers on the platform, ranked by reputation.</p>
+            {renderContent()}
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
+
+export default LeaderboardPage;
