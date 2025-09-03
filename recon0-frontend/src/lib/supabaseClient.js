@@ -1,8 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
+
+// variables
+const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const VITE_SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // IMPORTANT: Replace with your actual Supabase URL and Anon Key
 // It is safe to expose these in a browser-based application
-const supabaseUrl = 'https://lxcbdbirburbdbluaayq.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4Y2JkYmlyYnVyYmRibHVhYXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzMjc3NjEsImV4cCI6MjA3MTkwMzc2MX0.E_0dY139yTzGjjh2WUtby1iTG2tJdMVqSFg-s1uSilk'
+const supabaseUrl = VITE_SUPABASE_URL;
+const supabaseAnonKey = VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

@@ -1,117 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function ProgramsPage() {
+const ProgramsPage = () => {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // --- NEW STATE FOR FILTERS ---
-  const [minBounty, setMinBounty] = useState(0);
+  const [error, setError] = useState('');
 
-  // This function will be called when the component loads or when a filter changes
-  const fetchPrograms = () => {
-    setLoading(true);
-    // We build the query string for the API call
-    const query = new URLSearchParams({
-        ...(minBounty > 0 && { minBounty }),
-    }).toString();
-    
-    fetch(`http://localhost:3001/api/programs?${query}`)
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
-        setPrograms(data);
-        setLoading(false);
-      })
-      // eslint-disable-next-line no-unused-vars
-      .catch(error => {
-        setError("Could not load programs.");
-        setLoading(false);
-      });
-  };
-
-  // This effect runs only once when the page loads for the first time
   useEffect(() => {
-    fetchPrograms();
-  },[]);
+    const fetchPrograms = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await fetch('http://localhost:3001/api/v1/programs');
+        if (!response.ok) {
+          throw new Error('Failed to fetch programs. Is the mock API server running?');
+        }
+        const data = await response.json();
+        setPrograms(data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    fetchPrograms(); // Re-fetch data with the new filters
-  };
+    fetchPrograms();
+  }, []);
 
   return (
-    <div className="row g-4">
-      {/* --- FILTER SIDEBAR --- */}
-      <div className="col-lg-3">
-        <div className="card text-white">
-          <div className="card-header fw-bold text-black">
-            Filter Programs
-          </div>
-          <div className="card-body">
-            <form onSubmit={handleFilterSubmit}>
-              <div className="mb-3">
-                <label htmlFor="min_bounty" className="form-label text-black">Minimum Bounty ($)</label>
-                <input 
-                    type="number" 
-                    className="form-control" 
-                    id="min_bounty" 
-                    value={minBounty}
-                    onChange={(e) => setMinBounty(e.target.value)}
-                    placeholder="e.g., 500"
-                />
-              </div>
-              <button type="submit" className="btn btn-primary w-100">Apply Filters</button>
-            </form>
-          </div>
-        </div>
-      </div>
+    <div className="container mt-5">
+      <h2 className="mb-4">Program Discovery</h2>
+      <p className="text-muted mb-5">Find the best opportunities to showcase your skills and earn bounties.</p>
 
-      {/* --- PROGRAMS LIST --- */}
-      <div className="col-lg-9">
-        <div className="mb-4">
-          <h1 className="display-5 fw-bolder">Program Discovery</h1>
-          <p className="text-muted">Find the best opportunities for your skills and interests.</p>
-        </div>
+      {loading && <p>Loading programs...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
-        {loading && <p>Loading programs...</p>}
-        {error && <div className="alert alert-danger">Error: {error}</div>}
-
-        {!loading && !error && (
-          <div className="row g-4">
-            {Array.isArray(programs) && programs.length > 0 ? (
-                programs.map(program => (
-                <div key={program.id} className="col-md-6 col-lg-4">
-                  <div className="card h-100">
-                    <div className="card-body d-flex flex-column">
-                      <h5 className="card-title fw-bold">{program.title}</h5>
-                      <p className="card-subtitle mb-2 text-muted">{program.organizationName}</p>
-                      <div className="my-3">
-                        {program.targets.map(target => (
-                          <span key={target} className="badge rounded-pill me-2" style={{ backgroundColor: 'var(--border-color)'}}>
-                            {target}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-auto d-flex justify-content-between align-items-center">
-                        <p className="fw-bold fs-5 mb-0" style={{ color: 'var(--accent-green)' }}>
-                          ${program.bounty.min} - ${program.bounty.max}
-                        </p>
-                        <Link to={`/programs/${program.id}`} className="btn btn-secondary btn-sm">View Program</Link>
-                      </div>
+      {!loading && !error && (
+        <div className="row">
+          {programs.map((program) => (
+            <div key={program.id} className="col-lg-4 col-md-6 mb-4">
+              <div className="card h-100 shadow-sm program-card">
+                <div className="card-body d-flex flex-column">
+                  <div className="d-flex align-items-center mb-3">
+                    <img 
+                      src={program.organization_logo_url} 
+                      alt={`${program.organization_name} logo`}
+                      className="rounded-circle me-3"
+                      style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                    />
+                    <div>
+                      <h5 className="card-title mb-0">{program.name}</h5>
+                      <small className="text-muted">by {program.organization_name}</small>
                     </div>
                   </div>
+                  
+                  <p className="card-text flex-grow-1">{program.description}</p>
+                  
+                  <div className="mb-3">
+                    {program.tags.map(tag => (
+                      <span key={tag} className="badge bg-secondary me-2 text-capitalize">{tag}</span>
+                    ))}
+                  </div>
+
+                  <div className="d-flex justify-content-between align-items-center">
+                     <span className="bounty-range">
+                       ${program.min_bounty} - ${program.max_bounty}
+                     </span>
+                     {/* This link will eventually go to /programs/:programId */}
+                     <Link to={`/programs/${program.id}`} className="btn btn-outline-primary btn-sm">
+                       View Program
+                     </Link>
+                  </div>
                 </div>
-              ))
-            ) : (
-                <p className="text-muted">No programs match your current filters.</p>
-            )}
-          </div>
-        )}
-      </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default ProgramsPage;

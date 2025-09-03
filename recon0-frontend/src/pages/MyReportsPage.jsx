@@ -1,76 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Helper function to format the status with a Bootstrap badge
-const StatusBadge = ({ status }) => {
-  const statusClasses = {
-    'Accepted': 'bg-success',
-    'Resolved': 'bg-primary',
-    'Triaged': 'bg-info',
-    'New': 'bg-secondary',
-  };
-  const badgeClass = statusClasses[status] || 'bg-secondary';
-  return <span className={`badge ${badgeClass}`}>{status}</span>;
-};
-
-export default function MyReportsPage() {
+const MyReportsPage = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/my-reports')
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
-        setReports(data);
+    const fetchMyReports = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        // We will assume the API knows who the current user is
+        const response = await fetch('http://localhost:3001/api/v1/reports/my-reports');
+        if (!response.ok) {
+          throw new Error('Failed to fetch your reports.');
+        }
+        const data = await response.json();
+        setReports(data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
         setLoading(false);
-      })
-      // eslint-disable-next-line no-unused-vars
-      .catch(error => {
-        setError("Could not load your reports.");
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchMyReports();
   }, []);
 
-  if (loading) return <p>Loading your reports...</p>;
-  if (error) return <div className="alert alert-danger">Error: {error}</div>;
+  const getStatusBadge = (status) => {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return 'bg-success';
+      case 'resolved':
+        return 'bg-primary';
+      case 'triaging':
+        return 'bg-warning text-dark';
+      case 'new':
+        return 'bg-info text-dark';
+      case 'duplicate':
+      case 'invalid':
+        return 'bg-secondary';
+      default:
+        return 'bg-light text-dark';
+    }
+  };
 
   return (
-    <div>
-      <div className="mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h1 className="display-5 fw-bolder">My Reports</h1>
-            <p className="text-muted">A list of all the vulnerabilities you have submitted.</p>
-        </div>
-      </div>
+    <div className="container mt-5">
+      <h2 className="mb-4">My Reports</h2>
+      <p className="text-muted mb-4">A list of all the vulnerabilities you have submitted.</p>
 
-      <div className="card text-white">
-        <div className="table-responsive">
-          <table className="table table-dark table-hover mb-0">
-            <thead>
-              <tr>
-                <th scope="col">Title</th>
-                <th scope="col">Program</th>
-                <th scope="col">Status</th>
-                <th scope="col">Submitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map(report => (
-                <tr key={report.id}>
-                  <td>{report.title}</td>
-                  <td>{report.programOrganization}</td>
-                  <td><StatusBadge status={report.status} /></td>
-                  <td>{new Date(report.submittedAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {loading && <p>Loading your reports...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      {!loading && !error && (
+        <div className="card shadow-sm">
+          <div className="card-body">
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead className="table-dark">
+                  <tr>
+                    <th scope="col">Title</th>
+                    <th scope="col">Program</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Submitted On</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((report) => (
+                    <tr key={report.id}>
+                      <td>{report.title}</td>
+                      <td>{report.program_name}</td>
+                      <td>
+                        <span className={`badge ${getStatusBadge(report.status)}`}>
+                          {report.status}
+                        </span>
+                      </td>
+                      <td>{new Date(report.created_at).toLocaleDateString()}</td>
+                      <td>
+                        {/* This link will eventually go to the report detail page */}
+                        <Link to={`/reports/${report.id}`} className="btn btn-outline-primary btn-sm">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
-}
+};
+
+export default MyReportsPage;
