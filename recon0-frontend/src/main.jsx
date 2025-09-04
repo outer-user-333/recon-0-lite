@@ -22,6 +22,9 @@ import NotificationsPage from './pages/NotificationsPage.jsx';
 import LearningAcademyPage from './pages/LearningAcademyPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
 import AchievementsPage from './pages/AchievementsPage.jsx'; // <-- IMPORT THE NEW PAGE
+import MyProgramsPage from './pages/MyProgramsPage.jsx'; // <-- IMPORT THE NEW PAGE
+import ProgramAnalyticsPage from './pages/ProgramAnalyticsPage.jsx'; // <-- IMPORT THE NEW PAGE
+
 
 import './index.css';
 
@@ -47,6 +50,10 @@ const router = createBrowserRouter([
       { path: 'achievements', element: <AchievementsPage /> },
       // ==================================================
       // Organization Routes
+       // ===== ADD THE ROUTE FOR THE MY PROGRAMS PAGE =====
+      { path: 'my-programs', element: <MyProgramsPage /> },
+       // ===== ADD THE ROUTE FOR THE ANALYTICS PAGE =====
+      { path: 'programs/:programId/analytics', element: <ProgramAnalyticsPage /> },
       { path: 'create-program', element: <CreateProgramPage /> },
       { path: 'manage-reports', element: <ManageReportsPage /> },
       // Common Routes

@@ -11,8 +11,11 @@ const ManageReportsPage = () => {
       try {
         setLoading(true);
         setError('');
-        // This endpoint will fetch all reports for the organization's programs
-        const response = await fetch('http://localhost:3001/api/v1/reports/organization');
+        // // This endpoint will fetch all reports for the organization's programs
+        // const response = await fetch('http://localhost:3001/api/v1/reports/organization');
+
+         // ** THIS IS THE ONLY LINE THAT HAS CHANGED **
+                const response = await fetch('http://localhost:3001/api/v1/reports/organization');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

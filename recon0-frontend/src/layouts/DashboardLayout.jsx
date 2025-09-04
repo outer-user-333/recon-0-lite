@@ -85,6 +85,12 @@ const DashboardLayout = () => {
 
           {isOrganization && (
             <>
+             {/* ===== UPDATE THIS LINK ===== */}
+            <li className="nav-item">
+                <NavLink className={navLinkClasses} to="/my-programs">
+                    <i className="fas fa-briefcase me-2"></i> My Programs
+                </NavLink>
+            </li>
               <li className="nav-item">
                 <NavLink className={navLinkClasses} to="/manage-reports">
                   <i className="fas fa-tasks me-2"></i> Manage Reports
