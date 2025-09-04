@@ -36,6 +36,11 @@ const mockNotifications = [
     { id: 4, type: 'comment', message: 'SecureCorp left a comment on your report #1824.', created_at: '2025/09/01 08:15:00', is_read: false },
 ];
 
+let mockComments = [
+    { id: 'comment-1', report_id: 'report-1', author: 'Sujal (SecureCorp)', content: 'Great find! We are working on a fix.', created_at: '2025-09-04T10:00:00Z' },
+    { id: 'comment-2', report_id: 'report-1', author: 'glitch_hunter', content: 'Thanks! Let me know if you need more details.', created_at: '2025-09-04T10:05:00Z' },
+];
+
 // =================================================================
 // --- API ENDPOINTS ---
 // This section contains ALL endpoints for the application.
@@ -118,6 +123,28 @@ app.get('/api/v1/notifications', (req, res) => {
     res.json({ success: true, data: mockNotifications });
 });
 
+// ===== ADD NEW ENDPOINT TO GET COMMENTS FOR A REPORT =====
+app.get('/api/v1/reports/:id/comments', (req, res) => {
+    console.log(`GET /api/v1/reports/${req.params.id}/comments`);
+    const reportComments = mockComments.filter(c => c.report_id === req.params.id);
+    res.json({ success: true, data: reportComments });
+});
+// =========================================================
+
+// ===== ADD NEW ENDPOINT TO POST A NEW COMMENT =====
+app.post('/api/v1/reports/:id/comments', (req, res) => {
+    console.log(`POST /api/v1/reports/${req.params.id}/comments`);
+    const newComment = {
+        id: `comment-${Date.now()}`,
+        report_id: req.params.id,
+        author: req.body.author,
+        content: req.body.content,
+        created_at: new Date().toISOString()
+    };
+    mockComments.push(newComment);
+    res.status(201).json({ success: true, data: newComment });
+});
+// ================================================
 
 // CATCH-ALL ROUTE FOR DEBUGGING 404 ERRORS
 app.use((req, res, next) => {

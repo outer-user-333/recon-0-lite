@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient'; // We need supabase for user role
 
 const ReportDetailPage = () => {
     // This page correctly uses reportId from the URL
-    const { reportId } = useParams();
+  const { reportId } = useParams();
     const [report, setReport] = useState(null);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [userProfile, setUserProfile] = useState(null);
@@ -14,43 +16,93 @@ const ReportDetailPage = () => {
     const [newStatus, setNewStatus] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        // This function correctly fetches REPORT details
-        const fetchReportDetails = async () => {
-            if (!reportId) return;
-            try {
-                setLoading(true);
-                setError('');
-                const response = await fetch(`http://localhost:3001/api/v1/reports/${reportId}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const result = await response.json();
-                if (result.success) {
-                    setReport(result.data);
-                    setNewStatus(result.data.status); // Pre-fill the dropdown
-                } else {
-                    throw new Error(result.message || 'Failed to fetch report details.');
-                }
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
 
+    const fetchReportAndComments = useCallback(async () => {
+        if (!reportId) return;
+        try {
+            setLoading(true);
+            setError('');
+            // Fetch both report details and comments in parallel
+            const [reportResponse, commentsResponse] = await Promise.all([
+                fetch(`http://localhost:3001/api/v1/reports/${reportId}`),
+                fetch(`http://localhost:3001/api/v1/reports/${reportId}/comments`)
+            ]);
+
+            if (!reportResponse.ok) throw new Error(`Failed to fetch report: ${reportResponse.status}`);
+            const reportResult = await reportResponse.json();
+            if (reportResult.success) {
+                setReport(reportResult.data);
+                setNewStatus(reportResult.data.status);
+            } else {
+                throw new Error(reportResult.message || 'Could not fetch report details.');
+            }
+
+            if (!commentsResponse.ok) throw new Error(`Failed to fetch comments: ${commentsResponse.status}`);
+            const commentsResult = await commentsResponse.json();
+            if (commentsResult.success) {
+                setComments(commentsResult.data);
+            } else {
+                throw new Error(commentsResult.message || 'Could not fetch comments.');
+            }
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [reportId]);
+
+
+// old
+    // useEffect(() => {
+    //     // This function correctly fetches REPORT details
+    //     const fetchReportDetails = async () => {
+    //         if (!reportId) return;
+    //         try {
+    //             setLoading(true);
+    //             setError('');
+    //             const response = await fetch(`http://localhost:3001/api/v1/reports/${reportId}`);
+    //             if (!response.ok) {
+    //                 throw new Error(`HTTP error! status: ${response.status}`);
+    //             }
+    //             const result = await response.json();
+    //             if (result.success) {
+    //                 setReport(result.data);
+    //                 setNewStatus(result.data.status); // Pre-fill the dropdown
+    //             } else {
+    //                 throw new Error(result.message || 'Failed to fetch report details.');
+    //             }
+    //         } catch (err) {
+    //             console.error("Fetch Error:", err);
+    //             setError(err.message);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     const fetchUserProfile = async () => {
+    //         const { data: { user } } = await supabase.auth.getUser();
+    //         if (user) {
+    //             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    //             setUserProfile(profile);
+    //         }
+    //     };
+
+    //     fetchUserProfile();
+    //     fetchReportDetails();
+    // }, [reportId]);
+
+        useEffect(() => {
         const fetchUserProfile = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+                const { data: profile } = await supabase.from('profiles').select('role, username').eq('id', user.id).single();
                 setUserProfile(profile);
             }
         };
-
         fetchUserProfile();
-        fetchReportDetails();
-    }, [reportId]);
+        fetchReportAndComments();
+    }, [reportId, fetchReportAndComments]);
     
     const handleStatusUpdate = async (e) => {
         e.preventDefault();
@@ -74,6 +126,34 @@ const ReportDetailPage = () => {
         }
     };
 
+    
+    const handleCommentSubmit = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+        setIsSaving(true);
+        try {
+            const response = await fetch(`http://localhost:3001/api/v1/reports/${reportId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: newComment,
+                    author: userProfile?.username || 'User' // Send the current user's name
+                }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                setComments(prevComments => [...prevComments, result.data]); // Add new comment to the list
+                setNewComment(''); // Clear the textarea
+            } else {
+                throw new Error(result.message || 'Failed to post comment.');
+            }
+        } catch (err) {
+            console.error(err);
+            // Optionally set an error state for the comment form
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     if (loading) return <p>Loading report details...</p>;
     if (error) return <div className="alert alert-danger">Error: {error}</div>;
@@ -129,6 +209,51 @@ const ReportDetailPage = () => {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+              {/* Comments Section */}
+            <div className="card shadow-lg">
+                <div className="card-header">
+                    <h5 className="mb-0">Communication</h5>
+                </div>
+                <div className="card-body">
+                    {comments.length > 0 ? (
+                        comments.map(comment => (
+                            <div key={comment.id} className="mb-3 d-flex">
+                                <div className="avatar me-3 bg-secondary text-white">{comment.author.charAt(0).toUpperCase()}</div>
+                                <div className="w-100">
+                                    <div className="d-flex justify-content-between">
+                                        <span className="fw-bold">{comment.author}</span>
+                                        <small className="text-muted">{new Date(comment.created_at).toLocaleString()}</small>
+                                    </div>
+                                    <p className="mb-0 bg-light p-2 rounded">{comment.content}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-muted">No comments yet.</p>
+                    )}
+
+                    <hr />
+                    
+                    <form onSubmit={handleCommentSubmit}>
+                        <div className="mb-3">
+                            <label htmlFor="newComment" className="form-label fw-bold">Add a comment</label>
+                            <textarea
+                                id="newComment"
+                                className="form-control"
+                                rows="3"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Type your message here..."
+                                required
+                            ></textarea>
+                        </div>
+                        <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                            {isSaving ? 'Submitting...' : 'Submit Comment'}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
