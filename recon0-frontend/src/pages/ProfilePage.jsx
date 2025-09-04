@@ -1,36 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import {supabase} from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
+// --- FIX 1: Import the CORRECT function names ---
+import { calculateLevel, calculateProgress } from '../lib/gamificationUtils';
 
 const ProfilePage = () => {
-    const [profile, setProfile] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [message, setMessage] = useState('');
 
+    // Form state
     const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
     const [bio, setBio] = useState('');
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            setLoading(true);
+        const fetchUserProfile = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error("You must be logged in to view your profile.");
+                if (!user) throw new Error("User not found.");
 
-                const { data, error } = await supabase
+                const { data: profile, error } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single();
 
                 if (error) throw error;
-                
-                setProfile(data);
-                setFullName(data.full_name || '');
-                setUsername(data.username || '');
-                setBio(data.bio || '');
 
+                if (profile) {
+                    setUserProfile(profile);
+                    setFullName(profile.full_name || '');
+                    setUsername(profile.username || '');
+                    setBio(profile.bio || '');
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -38,36 +41,48 @@ const ProfilePage = () => {
             }
         };
 
-        fetchProfile();
+        fetchUserProfile();
     }, []);
+
+    useEffect(() => {
+        if (!userProfile) return;
+
+        const channel = supabase
+            .channel(`public:profiles:id=eq.${userProfile.id}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userProfile.id}` },
+                (payload) => {
+                    console.log('Profile update received!', payload.new);
+                    setUserProfile(payload.new);
+                }
+            )
+            .subscribe();
+        
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userProfile]);
+
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setMessage('');
         setError('');
-        setSuccessMessage('');
+        setLoading(true);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Authentication error.");
-
-            const updates = {
-                id: user.id,
-                full_name: fullName,
-                username: username,
-                bio: bio,
-                role: profile.role, // <-- THIS IS THE FIX: Include the existing role
-                updated_at: new Date(),
-            };
-
-            const { error } = await supabase.from('profiles').upsert(updates);
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    full_name: fullName,
+                    username: username,
+                    bio: bio,
+                })
+                .eq('id', userProfile.id);
 
             if (error) throw error;
-
-            setSuccessMessage('Profile updated successfully!');
-            const { data: updatedProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-            setProfile(updatedProfile);
-
+            setMessage('Profile updated successfully!');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -75,58 +90,82 @@ const ProfilePage = () => {
         }
     };
 
-    if (loading && !profile) return <div>Loading profile...</div>;
-    if (error && !profile) return <div className="alert alert-danger">Error: {error}</div>;
+    if (loading) return <div>Loading profile...</div>;
+
+    const isHacker = userProfile?.role === 'hacker';
+    
+    // --- FIX 2: Use the CORRECT logic and function names ---
+    let levelInfo = null;
+    let progress = null;
+    if (isHacker && userProfile) {
+        const { currentLevel, nextLevel } = calculateLevel(userProfile.reputation_points);
+        levelInfo = currentLevel;
+        progress = {
+            percentage: calculateProgress(userProfile.reputation_points, currentLevel, nextLevel),
+            pointsToNext: nextLevel ? nextLevel.minPoints - userProfile.reputation_points : 0,
+            nextLevelName: nextLevel ? nextLevel.name : 'Max Level'
+        };
+    }
+    // --------------------------------------------------------
 
     return (
         <div className="container mt-5">
             <h2 className="mb-4">My Profile</h2>
-            <div className="card shadow-sm">
-                <div className="card-body">
-                    {error && <div className="alert alert-danger">Error: {error}</div>}
-                    {successMessage && <div className="alert alert-success">{successMessage}</div>}
-                    
-                    <form onSubmit={handleProfileUpdate}>
-                        <div className="mb-3">
-                            <label htmlFor="email" className="form-label">Email Address</label>
-                            <input type="email" id="email" className="form-control" value={profile?.email || ''} disabled readOnly />
-                            <small className="form-text text-muted">Your email address cannot be changed.</small>
+            <div className="row">
+                <div className="col-md-8">
+                    <div className="card shadow-sm">
+                        <div className="card-body">
+                            {error && <div className="alert alert-danger">{error}</div>}
+                            {message && <div className="alert alert-success">{message}</div>}
+                            <form onSubmit={handleProfileUpdate}>
+                                <div className="mb-3">
+                                    <label className="form-label">Email Address</label>
+                                    <input type="email" className="form-control" value={userProfile?.email || ''} disabled />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Full Name</label>
+                                    <input type="text" className="form-control" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Username</label>
+                                    <input type="text" className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Bio</label>
+                                    <textarea className="form-control" rows="3" value={bio} onChange={(e) => setBio(e.target.value)}></textarea>
+                                </div>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating...' : 'Update Profile'}
+                                </button>
+                            </form>
                         </div>
-                        <div className="mb-3">
-                            <label htmlFor="fullName" className="form-label">Full Name</label>
-                            <input 
-                                type="text" 
-                                id="fullName" 
-                                className="form-control" 
-                                value={fullName} 
-                                onChange={(e) => setFullName(e.target.value)} 
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label htmlFor="username" className="form-label">Username</label>
-                            <input 
-                                type="text" 
-                                id="username" 
-                                className="form-control" 
-                                value={username} 
-                                onChange={(e) => setUsername(e.target.value)} 
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label htmlFor="bio" className="form-label">Bio</label>
-                            <textarea 
-                                id="bio" 
-                                className="form-control" 
-                                rows="4"
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                            ></textarea>
-                        </div>
-                        <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Saving...' : 'Update Profile'}
-                        </button>
-                    </form>
+                    </div>
                 </div>
+                {isHacker && levelInfo && progress && (
+                    <div className="col-md-4">
+                        <div className="card shadow-sm">
+                            <div className="card-body">
+                                <h5 className="card-title">Your Progress</h5>
+                                <p className="text-muted">Reputation: <span className="fw-bold text-primary">{userProfile.reputation_points}</span></p>
+                                <hr />
+                                <p><strong>Level: {levelInfo.name}</strong></p>
+                                <div className="progress" style={{ height: '20px' }}>
+                                    <div
+                                        className="progress-bar"
+                                        role="progressbar"
+                                        style={{ width: `${progress.percentage}%` }}
+                                        aria-valuenow={progress.percentage}
+                                        aria-valuemin="0"
+                                        aria-valuemax="100"
+                                    >
+                                        {Math.round(progress.percentage)}%
+                                    </div>
+                                </div>
+                                <p className="mt-2 text-muted small">{progress.pointsToNext > 0 ? `${progress.pointsToNext} points to ${progress.nextLevelName}` : 'Max Level Reached!'}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
