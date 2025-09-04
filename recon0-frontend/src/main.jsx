@@ -19,6 +19,7 @@ import ManageReportsPage from './pages/ManageReportsPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import LearningAcademyPage from './pages/LearningAcademyPage.jsx';
+import ChatPage from './pages/ChatPage.jsx'; // <-- IMPORT THE NEW PAGE
 
 import './index.css';
 
@@ -27,22 +28,28 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignupPage /> },
   { path: '/verify', element: <VerifyPage /> },
+  // Authenticated Routes
   {
     path: '/',
     element: <DashboardLayout />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/profile', element: <ProfilePage /> },
+      { path: '/leaderboard', element: <LeaderboardPage /> },
+      { path: '/notifications', element: <NotificationsPage /> },
+      // ===== ADD THE ROUTE FOR THE CHAT PAGE =====
+      { path: '/chat', element: <ChatPage /> },
+      // ===========================================
+      // Hacker Routes
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/submit', element: <SubmitReportPage /> },
       { path: '/my-reports', element: <MyReportsPage /> },
       { path: '/reports/:reportId', element: <ReportDetailPage /> },
+      { path: '/academy', element: <LearningAcademyPage /> },
+      // Organization Routes
       { path: '/create-program', element: <CreateProgramPage /> },
       { path: '/manage-reports', element: <ManageReportsPage /> },
-      { path: '/leaderboard', element: <LeaderboardPage /> },
-      { path: '/notifications', element: <NotificationsPage /> },
-      { path: '/academy', element: <LearningAcademyPage /> },
     ],
   },
 ]);
