@@ -73,6 +73,13 @@ const DashboardLayout = () => {
                   <i className="fas fa-book-open me-2"></i> Academy
                 </NavLink>
               </li>
+               {/* ===== ADD ACHIEVEMENTS LINK FOR HACKERS ===== */}
+                            <li className="nav-item">
+                                <NavLink className={navLinkClasses} to="/achievements">
+                                    <i className="fas fa-shield-alt me-2"></i> Achievements
+                                </NavLink>
+                            </li>
+                            {/* ============================================== */}
             </>
           )}
 

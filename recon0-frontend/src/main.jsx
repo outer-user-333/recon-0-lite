@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
+// Import all pages
 import App from './App.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
@@ -19,7 +20,8 @@ import ManageReportsPage from './pages/ManageReportsPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import LearningAcademyPage from './pages/LearningAcademyPage.jsx';
-import ChatPage from './pages/ChatPage.jsx'; // <-- IMPORT THE NEW PAGE
+import ChatPage from './pages/ChatPage.jsx';
+import AchievementsPage from './pages/AchievementsPage.jsx'; // <-- IMPORT THE NEW PAGE
 
 import './index.css';
 
@@ -28,28 +30,29 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignupPage /> },
   { path: '/verify', element: <VerifyPage /> },
-  // Authenticated Routes
   {
     path: '/',
     element: <DashboardLayout />,
     children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/profile', element: <ProfilePage /> },
-      { path: '/leaderboard', element: <LeaderboardPage /> },
-      { path: '/notifications', element: <NotificationsPage /> },
-      // ===== ADD THE ROUTE FOR THE CHAT PAGE =====
-      { path: '/chat', element: <ChatPage /> },
-      // ===========================================
+      { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       // Hacker Routes
-      { path: '/programs', element: <ProgramsPage /> },
-      { path: '/programs/:programId', element: <ProgramDetailPage /> },
-      { path: '/programs/:programId/submit', element: <SubmitReportPage /> },
-      { path: '/my-reports', element: <MyReportsPage /> },
-      { path: '/reports/:reportId', element: <ReportDetailPage /> },
-      { path: '/academy', element: <LearningAcademyPage /> },
+      { path: 'programs', element: <ProgramsPage /> },
+      { path: 'programs/:programId', element: <ProgramDetailPage /> },
+      { path: 'programs/:programId/submit', element: <SubmitReportPage /> },
+      { path: 'my-reports', element: <MyReportsPage /> },
+      { path: 'reports/:reportId', element: <ReportDetailPage /> },
+      { path: 'academy', element: <LearningAcademyPage /> },
+      // ===== ADD THE ROUTE FOR THE ACHIEVEMENTS PAGE =====
+      { path: 'achievements', element: <AchievementsPage /> },
+      // ==================================================
       // Organization Routes
-      { path: '/create-program', element: <CreateProgramPage /> },
-      { path: '/manage-reports', element: <ManageReportsPage /> },
+      { path: 'create-program', element: <CreateProgramPage /> },
+      { path: 'manage-reports', element: <ManageReportsPage /> },
+      // Common Routes
+      { path: 'leaderboard', element: <LeaderboardPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
+      { path: 'chat', element: <ChatPage /> },
     ],
   },
 ]);

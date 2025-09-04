@@ -49,6 +49,25 @@ let mockPrograms = [
     { id: 'prog-2', organization_name: 'SecureNet', title: 'API Security Assessment', description: 'Identify vulnerabilities in our public-facing REST APIs.', policy: 'Responsible disclosure is key.', scope: 'api.securenet.com/v1', out_of_scope: 'Internal APIs', min_bounty: 250, max_bounty: 3000, tags: ['api', 'security', 'auth'] },
 ];
 
+// ===== NEW MOCK DATA FOR ACHIEVEMENTS =====
+const allAchievements = [
+    { id: 'ach-1', name: 'First Find', description: 'Submit your first valid report.', icon: 'fa-flag' },
+    { id: 'ach-2', name: 'Bug Squasher', description: 'Submit 5 valid reports.', icon: 'fa-hammer' },
+    { id: 'ach-3', name: 'Critical Thinker', description: 'Get a critical severity report accepted.', icon: 'fa-brain' },
+    { id: 'ach-4', name: 'Specialist', description: 'Reach Specialist Level (250+ RP).', icon: 'fa-star' },
+    { id: 'ach-5', name: 'Community Helper', description: 'Leave 10 helpful comments.', icon: 'fa-hands-helping' },
+    { id: 'ach-6', name: 'Top 10', description: 'Place in the top 10 on the leaderboard.', icon: 'fa-trophy' },
+];
+
+// Let's pretend asim_hax has earned some achievements
+let userAchievements = {
+    'asim_hax': [
+        { id: 'ach-1', name: 'First Find' },
+        { id: 'ach-3', name: 'Critical Thinker' },
+    ]
+};
+// ===========================================
+
 let mockReports = [
     { id: 'report-1', program_id: 'prog-1', program_name: 'Web App Pentest', reporter_username: 'asim_hax', title: 'XSS in Profile Page', severity: 'Medium', status: 'New', created_at: '2025-09-01T10:00:00Z', description: 'A stored Cross-Site Scripting vulnerability exists on the user profile page, allowing an attacker to inject arbitrary scripts.', steps_to_reproduce: '1. Go to your profile page.\n2. In the bio field, enter `<script>alert("XSS")</script>`.\n3. Save the profile.\n4. Visit the public profile page to see the alert.', impact: 'An attacker can steal session cookies or perform actions on behalf of the user.'},
     { id: 'report-2', program_id: 'prog-1', program_name: 'Web App Pentest', reporter_username: 'cyb3r_ninja', title: 'IDOR to view other users\' invoices', severity: 'Critical', status: 'New', created_at: '2025-09-03T14:30:00Z', description: 'An Insecure Direct Object Reference vulnerability allows viewing invoices of any user by changing the ID in the URL.', steps_to_reproduce: '1. Navigate to `/invoices/123`.\n2. Change the ID in the URL to `124`.\n3. The invoice for user 124 is displayed.', impact: 'Sensitive financial information of all users can be exposed.'},
@@ -155,6 +174,20 @@ app.patch('/api/v1/reports/:id/status', async(req, res) => {
     res.json({ success: true, data: report });
 });
 
+
+// ===== NEW ENDPOINTS FOR ACHIEVEMENTS =====
+app.get('/api/v1/achievements', (req, res) => {
+    console.log('GET /api/v1/achievements');
+    res.json({ success: true, data: allAchievements });
+});
+
+app.get('/api/v1/users/:username/achievements', (req, res) => {
+    const username = req.params.username;
+    console.log(`GET /api/v1/users/${username}/achievements`);
+    const earned = userAchievements[username] || [];
+    res.json({ success: true, data: earned });
+});
+// =========================================
 
 // --- Hacker Workflow Endpoints ---
 app.get('/api/v1/programs', (req, res) => {
