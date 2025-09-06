@@ -132,3 +132,22 @@ export const getPrograms = () => {
 export const getProgramById = (programId) => {
     return apiFetch(`/programs/${programId}`);
 };
+
+
+// --- REPORT FUNCTIONS ---
+
+export const getMyReports = () => {
+    return apiFetch('/my-reports');
+};
+
+export const getReportById = (reportId) => {
+    return apiFetch(`/reports/${reportId}`);
+};
+
+export const submitReport = (reportData) => {
+    // reportData is { programId, title, severity, description, steps_to_reproduce, impact }
+    return apiFetch('/reports', {
+        method: 'POST',
+        body: JSON.stringify(reportData),
+    });
+};

@@ -271,6 +271,37 @@ app.get('/api/v1/stats', authenticateToken, (req, res) => {
 });
 
 
+// Submit a new report
+app.post('/api/v1/reports', authenticateToken, (req, res) => {
+    // Destructure the new fields from the request body
+    const { programId, title, severity, description, steps_to_reproduce, impact } = req.body;
+    const reporter = mockUsers.find(u => u.id === req.user.id);
+    const program = mockPrograms.find(p => p.id === programId);
+
+    if (!reporter || !program) {
+        return res.status(404).json({ success: false, message: 'User or Program not found.' });
+    }
+
+    const newReport = {
+        id: `report-${Date.now()}`,
+        program_id: program.id,
+        program_name: program.title,
+        reporter_id: reporter.id,
+        title,
+        severity,
+        description,
+        steps_to_reproduce, // Add new field
+        impact,              // Add new field
+        status: 'New',
+        created_at: new Date().toISOString(),
+    };
+
+    mockReports.push(newReport);
+    console.log('New report submitted:', newReport);
+    res.status(201).json({ success: true, data: newReport });
+});
+
+
 
 
 
