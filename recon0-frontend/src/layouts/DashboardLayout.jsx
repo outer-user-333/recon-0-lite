@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseChatClient';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -28,6 +28,27 @@ const DashboardLayout = () => {
 
     fetchUserProfile();
   }, []);
+
+  // Real-time subscription to profile changes
+  useEffect(() => {
+    if (!userProfile) return;
+
+    const channel = supabase
+      .channel(`public:profiles:id=eq.${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userProfile.id}` },
+        (payload) => {
+          console.log('Profile update received in layout!', payload.new);
+          setUserProfile(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userProfile]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -127,6 +148,12 @@ const DashboardLayout = () => {
         <hr />
         <div className="dropdown">
           <a href="#" className="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <img 
+              src={userProfile?.avatar_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjNmI3Mjc5Ii8+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTQiIHI9IjYiIGZpbGw9IiNkMWQ1ZGIiLz4KPHBhdGggZD0iTTYgMjZjMC02IDYtMTIgMTAtMTJzMTAgNiAxMCAxMiIgZmlsbD0iI2QxZDVkYiIvPgo8L3N2Zz4='} 
+              alt="Avatar" 
+              className="rounded-circle me-2"
+              style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+            />
             <strong>{userProfile?.username || 'User'}</strong>
           </a>
           <ul className="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
@@ -145,4 +172,3 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
-

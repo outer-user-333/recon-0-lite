@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseChatClient';
 
 const AchievementsPage = () => {
     const [allAchievements, setAllAchievements] = useState([]);

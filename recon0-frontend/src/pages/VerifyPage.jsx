@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabaseClient"; // Make sure this path is correct
+import { supabase } from '../lib/supabaseChatClient';
 
 const VerifyPage = () => {
   const [otp, setOtp] = useState("");

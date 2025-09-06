@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
-import { supabase } from '../lib/supabaseClient'; // Correct named import
+import { supabase } from '../lib/supabaseChatClient';
 
 // A list of common vulnerability types for the dropdown
 const VULNERABILITY_TYPES = [

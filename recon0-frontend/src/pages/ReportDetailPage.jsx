@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient'; // We need supabase for user role
+import { supabase } from '../lib/supabaseChatClient';
 
 const ReportDetailPage = () => {
     // This page correctly uses reportId from the URL

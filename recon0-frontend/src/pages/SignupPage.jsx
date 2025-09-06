@@ -1,181 +1,83 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabaseClient"; // <-- Import Supabase client
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../lib/apiService';
 
-function Header() {
-  // ... Header code remains exactly the same
-  return (
-    <nav
-      className="navbar navbar-expand-lg navbar-dark fixed-top"
-      style={{
-        backgroundColor: "rgba(17, 24, 39, 0.8)",
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <div className="container">
-        <Link
-          to="/"
-          className="navbar-brand fs-4 fw-bold"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          RECON<span style={{ color: "var(--accent-cyan)" }}>_</span>0
-        </Link>
-        <div className="ms-auto">
-          <Link to="/login" className="btn btn-ghost me-2">
-            Log In
-          </Link>
-          <Link to="/signup" className="btn btn-primary">
-            Sign Up
-          </Link>
-        </div>
-      </div>
-    </nav>
-  );
-}
+const SignupPage = () => {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [role, setRole] = useState('hacker'); // Default role
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
 
-export default function SignupPage() {
-  const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [role, setRole] = useState("hacker"); // <-- ADD THIS LINE
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setMessage('');
+        setLoading(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+        try {
+            const result = await register({ email, password, username, fullName, role });
+            if (result.success) {
+                setMessage('Registration successful! Please log in.');
+                setTimeout(() => navigate('/login'), 2000); // Redirect to login after 2 seconds
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // This is where we pass extra data to Supabase Auth
-        data: {
-          full_name: fullName, // Pass the full name
-          role: role, // Pass the selected role
-        },
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    } else if (data.user) {
-      // Navigate to the verification page as before
-      navigate("/verify", { state: { email } });
-    }
-    setLoading(false);
-  };
-
-  return (
-    <>
-      <Header />
-      <div className="d-flex align-items-center justify-content-center vh-100 py-5">
-        <div
-          className="card p-4 my-5"
-          style={{ width: "100%", maxWidth: "400px" }}
-        >
-          <div className="card-body">
-            <h2 className="card-title text-center mb-4">Create Your Account</h2>
-            {error && <div className="alert alert-danger">{error}</div>}
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="fullName" className="form-label">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="fullName"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="password" className="form-label">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {/* ===== ADD THIS BLOCK FOR ROLE SELECTION ===== */}
-              <div className="mb-3">
-                <label className="form-label">Register as</label>
-                <div className="d-flex">
-                  <div className="form-check me-4">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="roleHacker"
-                      value="hacker"
-                      checked={role === "hacker"}
-                      onChange={(e) => setRole(e.target.value)}
-                    />
-                    <label className="form-check-label" htmlFor="roleHacker">
-                      Hacker
-                    </label>
-                  </div>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="role"
-                      id="roleOrganization"
-                      value="organization"
-                      checked={role === "organization"}
-                      onChange={(e) => setRole(e.target.value)}
-                    />
-                    <label
-                      className="form-check-label"
-                      htmlFor="roleOrganization"
-                    >
-                      Organization
-                    </label>
-                  </div>
+    return (
+        <div className="d-flex align-items-center justify-content-center vh-100">
+            <div className="card shadow-lg" style={{ width: '450px' }}>
+                <div className="card-body p-5">
+                    <h3 className="card-title text-center mb-4">Create Account</h3>
+                    {error && <div className="alert alert-danger">{error}</div>}
+                    {message && <div className="alert alert-success">{message}</div>}
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <label className="form-label">Full Name</label>
+                            <input type="text" className="form-control" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                        </div>
+                         <div className="mb-3">
+                            <label className="form-label">Username</label>
+                            <input type="text" className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Email address</label>
+                            <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Password</label>
+                            <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        </div>
+                         <div className="mb-3">
+                            <label className="form-label">Sign up as:</label>
+                            <div className="form-check">
+                                <input className="form-check-input" type="radio" name="role" id="roleHacker" value="hacker" checked={role === 'hacker'} onChange={(e) => setRole(e.target.value)} />
+                                <label className="form-check-label" htmlFor="roleHacker">Hacker</label>
+                            </div>
+                            <div className="form-check">
+                                <input className="form-check-input" type="radio" name="role" id="roleOrg" value="organization" checked={role === 'organization'} onChange={(e) => setRole(e.target.value)} />
+                                <label className="form-check-label" htmlFor="roleOrg">Organization</label>
+                            </div>
+                        </div>
+                        <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                            {loading ? 'Creating Account...' : 'Sign Up'}
+                        </button>
+                    </form>
+                    <p className="mt-3 text-center">
+                        Already have an account? <Link to="/login">Log In</Link>
+                    </p>
                 </div>
-              </div>
-              {/* ============================================== */}
-              <button
-                type="submit"
-                className="btn btn-primary w-100"
-                disabled={loading}
-              >
-                {loading ? "Creating Account..." : "Create Account"}
-              </button>
-            </form>
-            <div className="text-center mt-3">
-              <span className="text-muted">Already have an account? </span>
-              <Link to="/login" style={{ color: "var(--accent-cyan)" }}>
-                Log In
-              </Link>
             </div>
-          </div>
         </div>
-      </div>
-    </>
-  );
-}
+    );
+};
+
+export default SignupPage;
