@@ -115,3 +115,9 @@ export const uploadAvatar = async (formData) => {
     }
     return response.json();
 };
+
+
+
+export const getStats = () => {
+    return apiFetch('/stats');
+};

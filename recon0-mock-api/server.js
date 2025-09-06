@@ -242,11 +242,34 @@ app.get('/api/v1/reports/:id', authenticateToken, (req, res) => {
     res.json({ success: true, data: report });
 });
 
+
 // Get leaderboard data
 app.get('/api/v1/leaderboard', authenticateToken, (req, res) => {
     console.log('Fetched leaderboard data');
     res.json({ success: true, data: mockLeaderboard });
 });
+
+// Get stats for the currently logged-in user
+app.get('/api/v1/stats', authenticateToken, (req, res) => {
+    const loggedInUserId = req.user.id;
+    const user = mockUsers.find(u => u.id === loggedInUserId);
+
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // In a real backend, you'd calculate these stats. Here, we'll derive them from our mock data.
+    const stats = {
+        reputation_points: user.reputation_points,
+        reports_submitted: mockReports.filter(r => r.reporter_id === user.id).length,
+        reports_accepted: mockReports.filter(r => r.reporter_id === user.id && r.status === 'Accepted').length,
+        bounties_earned: 0 // We can hardcode this for now
+    };
+
+    console.log(`Fetched stats for user: ${user.username}`);
+    res.json({ success: true, data: stats });
+});
+
 
 
 
