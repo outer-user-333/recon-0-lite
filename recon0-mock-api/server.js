@@ -96,6 +96,8 @@ let userAchievements = {
   'user-1': ["ach-1", "ach-3"],
 };
 
+let mockAttachments = [];
+
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -319,6 +321,34 @@ app.get('/api/v1/reports/:id', authenticateToken, (req, res) => {
     res.json({ success: true, data: report });
 });
 
+// Generic file upload endpoint for report attachments
+app.post('/api/v1/upload/attachment', authenticateToken, upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded.' });
+    }
+
+    const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+
+    console.log(`Attachment uploaded: ${fileUrl}`);
+    // Respond with the URL and original file details
+    res.json({
+        success: true,
+        message: 'File uploaded successfully!',
+        url: fileUrl,
+        name: req.file.originalname,
+        type: req.file.mimetype,
+    });
+});
+
+
+// Get all attachments for a specific report
+app.get('/api/v1/reports/:reportId/attachments', authenticateToken, (req, res) => {
+    const { reportId } = req.params;
+    const reportAttachments = mockAttachments.filter(att => att.report_id === reportId);
+
+    console.log(`Fetched ${reportAttachments.length} attachments for report ID: ${reportId}`);
+    res.json({ success: true, data: reportAttachments });
+});
 
 // Get leaderboard data
 app.get('/api/v1/leaderboard', authenticateToken, (req, res) => {
@@ -349,9 +379,9 @@ app.get('/api/v1/stats', authenticateToken, (req, res) => {
 
 
 // Submit a new report
+// Submit a new report (now with attachments)
 app.post('/api/v1/reports', authenticateToken, (req, res) => {
-    // Destructure the new fields from the request body
-    const { programId, title, severity, description, steps_to_reproduce, impact } = req.body;
+    const { programId, title, severity, description, steps_to_reproduce, impact, attachments } = req.body;
     const reporter = mockUsers.find(u => u.id === req.user.id);
     const program = mockPrograms.find(p => p.id === programId);
 
@@ -359,22 +389,32 @@ app.post('/api/v1/reports', authenticateToken, (req, res) => {
         return res.status(404).json({ success: false, message: 'User or Program not found.' });
     }
 
+    const newReportId = `report-${Date.now()}`;
     const newReport = {
-        id: `report-${Date.now()}`,
+        id: newReportId,
         program_id: program.id,
         program_name: program.title,
         reporter_id: reporter.id,
-        title,
-        severity,
-        description,
-        steps_to_reproduce, // Add new field
-        impact,              // Add new field
+        title, severity, description, steps_to_reproduce, impact,
         status: 'New',
         created_at: new Date().toISOString(),
     };
-
     mockReports.push(newReport);
-    console.log('New report submitted:', newReport);
+
+    // If there are attachments, add them to our mock attachments array
+    if (attachments && attachments.length > 0) {
+        attachments.forEach(att => {
+            mockAttachments.push({
+                id: `attach-${Date.now()}-${Math.random()}`,
+                report_id: newReportId,
+                file_url: att.url,
+                file_name: att.name,
+                file_type: att.type,
+            });
+        });
+    }
+
+    console.log('New report submitted with attachments:', newReport);
     res.status(201).json({ success: true, data: newReport });
 });
 

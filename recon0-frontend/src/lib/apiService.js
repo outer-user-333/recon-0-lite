@@ -221,3 +221,33 @@ export const uploadOrgLogo = (formData) => {
         headers,
     }).then(res => res.json());
 };
+
+
+// --- ATTACHMENT FUNCTIONS ---
+
+export const uploadAttachment = (formData) => {
+    // This is a special case that doesn't use the generic apiFetch,
+    // because the browser needs to set the 'Content-Type' header for FormData.
+    const token = getToken();
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return fetch(`${API_BASE_URL}/upload/attachment`, {
+        method: 'POST',
+        body: formData,
+        headers,
+    }).then(res => {
+        if (!res.ok) {
+            // Try to parse error JSON, otherwise throw generic error
+            return res.json().then(err => { throw new Error(err.message || 'File upload failed') });
+        }
+        return res.json();
+    });
+};
+
+
+export const getReportAttachments = (reportId) => {
+    return apiFetch(`/reports/${reportId}/attachments`);
+};

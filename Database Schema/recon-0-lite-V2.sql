@@ -92,6 +92,16 @@ CREATE TABLE reports (
 );
 COMMENT ON TABLE public.reports IS 'Stores all vulnerability reports submitted by hackers.';
 
+-- Stores links to attachments for a specific report.
+CREATE TABLE report_attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name TEXT, -- The original name of the file
+    file_type TEXT, -- e.g., 'image/png', 'video/mp4'
+    uploaded_at TIMESTAMPTZ DEFAULT NOW()
+);
+COMMENT ON TABLE public.report_attachments IS 'Stores URLs to files (e.g., screenshots, videos) attached to a vulnerability report.';
 
 -- Stores comments on a specific report for communication.
 CREATE TABLE report_comments (
@@ -182,3 +192,5 @@ ON public.chat_messages
 FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = sender_id);
+
+
