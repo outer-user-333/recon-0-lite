@@ -52,13 +52,16 @@ const apiFetch = async (endpoint, options = {}) => {
 // --- AUTH FUNCTIONS ---
 
 export const register = async (userData) => {
-    // userData should be an object with { email, password, username, fullName, role }
-    return apiFetch('/auth/register', {
+    const result = await apiFetch('/auth/register', {
         method: 'POST',
         body: JSON.stringify(userData),
     });
+    // If registration is successful and we get a token, save it.
+    if (result.token) {
+        setToken(result.token);
+    }
+    return result;
 };
-
 export const login = async (credentials) => {
     // credentials should be an object with { email, password }
     const result = await apiFetch('/auth/login', {
@@ -203,4 +206,18 @@ export const getAllAchievements = () => {
 
 export const getMyAchievements = () => {
     return apiFetch('/achievements/my');
+};
+
+export const uploadOrgLogo = (formData) => {
+    const token = getToken();
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return fetch(`${API_BASE_URL}/organization/upload/logo`, {
+        method: 'POST',
+        body: formData,
+        headers,
+    }).then(res => res.json());
 };

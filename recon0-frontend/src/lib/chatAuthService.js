@@ -12,6 +12,7 @@ export const loginChatUser = async () => {
         return; // Already logged in
     }
 
+    // eslint-disable-next-line no-unused-vars
     const { data, error } = await supabase.auth.signInWithPassword({
         email: CHAT_USER_EMAIL,
         password: CHAT_USER_PASSWORD,

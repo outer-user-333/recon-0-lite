@@ -31,18 +31,23 @@ const ProgramsPage = () => {
             <h2 className="mb-4">Bug Bounty Programs</h2>
             <div className="list-group shadow-sm">
                 {programs.map(program => (
-                    <Link to={`/programs/${program.id}`} key={program.id} className="list-group-item list-group-item-action">
-                        <div className="d-flex w-100 justify-content-between">
-                            <h5 className="mb-1">{program.title}</h5>
-                            <small className="text-success">${program.min_bounty} - ${program.max_bounty}</small>
-                        </div>
-                        <p className="mb-1">Hosted by: <strong>{program.org_name}</strong></p>
-                        <div>
-                            {program.tags.map(tag => (
-                                <span key={tag} className="badge bg-secondary me-1">{tag}</span>
-                            ))}
-                        </div>
-                    </Link>
+                  <Link to={`/programs/${program.id}`} key={program.id} className="list-group-item list-group-item-action">
+    <div className="d-flex align-items-center">
+        <img 
+            src={program.org_logo_url || 'data:image/svg+xml;base64,...'} 
+            alt={`${program.org_name} logo`}
+            className="rounded-circle me-3"
+            style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+        />
+        <div className="flex-grow-1">
+            <div className="d-flex w-100 justify-content-between">
+                <h5 className="mb-1">{program.title}</h5>
+                <small className="text-success">${program.min_bounty} - ${program.max_bounty}</small>
+            </div>
+            <p className="mb-1">Hosted by: <strong>{program.org_name}</strong></p>
+        </div>
+    </div>
+</Link>
                 ))}
             </div>
         </div>

@@ -110,7 +110,6 @@ const ReportDetailPage = () => {
                 </div>
             )}
 
-            {/* === All Report Details Sections === */}
             <div className="card mt-4 shadow-sm">
                 <div className="card-header"><h5>Vulnerability Description</h5></div>
                 <div className="card-body"><p style={{ whiteSpace: 'pre-wrap' }}>{report.description}</p></div>

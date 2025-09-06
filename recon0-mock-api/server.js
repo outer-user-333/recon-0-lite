@@ -29,32 +29,9 @@ const upload = multer({ storage: storage });
 
 // --- IN-MEMORY DATABASE ---
 let mockUsers = [
-    {
-        id: 'user-1',
-        email: 'hacker@example.com',
-        password: 'password123',
-        username: 'asim_hax',
-        full_name: 'Asim the Hacker',
-        role: 'hacker',
-        reputation_points: 150,
-        avatar_url: null,
-        bio: 'Just a friendly neighborhood hacker.',
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: 'user-2',
-        email: 'org@example.com',
-        password: 'password123',
-        username: 'CyberCorpAdmin',
-        full_name: 'CyberCorp',
-        role: 'organization',
-        reputation_points: 0,
-        avatar_url: null,
-        bio: 'Securing the future.',
-        created_at: new Date().toISOString(),
-    },
+    
      {
-        id: 'user-3',
+        id: 'user-1',
         email: 'asdf@g.i',
         password: '12345',
         username: 'CyberCorpAdmin',
@@ -66,7 +43,7 @@ let mockUsers = [
         created_at: new Date().toISOString(),
     },
      {
-        id: 'user-4',
+        id: 'user-2',
         email: 'qwer@g.i',
         password: '12345',
         username: 'CyberCorORG',
@@ -156,7 +133,7 @@ app.post('/api/v1/auth/register', (req, res) => {
     const newUser = {
         id: `user-${userIdCounter++}`,
         email,
-        password, // In a real backend, this MUST be hashed!
+        password,
         username,
         full_name: fullName,
         role,
@@ -169,7 +146,20 @@ app.post('/api/v1/auth/register', (req, res) => {
     mockUsers.push(newUser);
     console.log('New user registered:', newUser);
 
-    res.status(201).json({ success: true, message: 'User registered successfully!' });
+    // --- NEW: Auto-login the user by returning a token ---
+    const fakeJwtPayload = Buffer.from(JSON.stringify({ 
+        id: newUser.id, 
+        role: newUser.role, 
+        email: newUser.email 
+    })).toString('base64');
+    const fakeToken = `fake-header.${fakeJwtPayload}.fake-signature`;
+
+    res.status(201).json({ 
+        success: true, 
+        message: 'User registered successfully!',
+        token: fakeToken, // Send the token back
+        user: { id: newUser.id, username: newUser.username, role: newUser.role }
+    });
 });
 
 app.post('/api/v1/auth/login', (req, res) => {
@@ -277,20 +267,36 @@ app.post('/api/v1/upload/avatar', authenticateToken, upload.single('file'), (req
 });
 
 
-// Get all programs
+// Get all programs and include their organization's logo
 app.get('/api/v1/programs', authenticateToken, (req, res) => {
-    console.log('Fetched all programs');
-    res.json({ success: true, data: mockPrograms });
+    const programsWithLogos = mockPrograms.map(program => {
+        const organization = mockUsers.find(u => u.id === program.organization_id);
+        return {
+            ...program,
+            // Add the org logo URL to the program object
+            org_logo_url: organization ? organization.avatar_url : null
+        };
+    });
+    console.log('Fetched all programs with logos');
+    res.json({ success: true, data: programsWithLogos });
 });
 
-// Get a single program by its ID
+// Get a single program by its ID, including the org logo
 app.get('/api/v1/programs/:id', authenticateToken, (req, res) => {
     const program = mockPrograms.find(p => p.id === req.params.id);
     if (!program) {
         return res.status(404).json({ success: false, message: 'Program not found.' });
     }
+
+    // Find the organization and add their logo URL
+    const organization = mockUsers.find(u => u.id === program.organization_id);
+    const programWithLogo = {
+        ...program,
+        org_logo_url: organization ? organization.avatar_url : null
+    };
+
     console.log(`Fetched program: ${program.title}`);
-    res.json({ success: true, data: program });
+    res.json({ success: true, data: programWithLogo });
 });
 
 
@@ -374,20 +380,22 @@ app.post('/api/v1/reports', authenticateToken, (req, res) => {
 
 
 // --- ORGANIZATION ENDPOINTS ---
-// Get all programs for the currently logged-in organization
+// Get all programs for the currently logged-in organization, including logos
 app.get('/api/v1/organization/my-programs', authenticateToken, (req, res) => {
-    // This is a protected route for organizations only
     if (req.user.role !== 'organization') {
         return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
     }
 
-    // --- SIMPLIFICATION FOR MOCKING ---
-    // For our mock environment, we'll return ALL sample programs to ANY logged-in organization.
-    // This makes testing easier, as you don't have to log in with a specific hardcoded user.
-    // The real backend will use the loggedInOrgId to filter the database properly.
-    const loggedInOrgId = req.user.id;
-    console.log(`Fetched all mock programs for organization ID: ${loggedInOrgId}`);
-    res.json({ success: true, data: mockPrograms });
+    // For our mock environment, we will always return all mock programs
+    // and simply add the logo URL to each. This is the simplest and most robust
+    // way to ensure any org user can see the list for testing.
+    const programsWithLogos = mockPrograms.map(program => ({
+        ...program,
+        org_logo_url: mockUsers.find(u => u.id === program.organization_id)?.avatar_url || null
+    }));
+
+    console.log(`Fetched all mock programs for organization ID: ${req.user.id}`);
+    res.json({ success: true, data: programsWithLogos });
 });
 
 
@@ -515,6 +523,35 @@ app.get('/api/v1/organization/programs/:programId/analytics', authenticateToken,
     res.json({ success: true, data: analyticsData });
 });
 
+
+// Upload a logo for the currently logged-in organization
+app.post('/api/v1/organization/upload/logo', authenticateToken, upload.single('file'), (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Only organizations can upload logos.' });
+    }
+
+    const loggedInOrgId = req.user.id;
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded.' });
+    }
+
+    const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+
+    const userIndex = mockUsers.findIndex(u => u.id === loggedInOrgId);
+    if (userIndex === -1) {
+        return res.status(404).json({ success: false, message: 'Organization profile not found.' });
+    }
+
+    // We will use the 'avatar_url' field on the user's profile to store their org logo
+    mockUsers[userIndex].avatar_url = fileUrl;
+
+    console.log(`Uploaded new logo for ${mockUsers[userIndex].username}: ${fileUrl}`);
+    res.json({
+        success: true,
+        message: 'Logo uploaded successfully!',
+        secure_url: fileUrl 
+    });
+});
 
 // Get notifications for the currently logged-in user
 app.get('/api/v1/notifications', authenticateToken, (req, res) => {

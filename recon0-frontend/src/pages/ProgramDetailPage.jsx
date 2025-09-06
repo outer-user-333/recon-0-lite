@@ -32,10 +32,20 @@ const ProgramDetailPage = () => {
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 className="mb-0">{program.title}</h2>
-                    <p className="text-muted">Hosted by {program.org_name}</p>
-                </div>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="d-flex align-items-center">
+         <img 
+            src={program.org_logo_url || 'data:image/svg+xml;base64,...'} 
+            alt={`${program.org_name} logo`}
+            className="rounded-circle me-3"
+            style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+        />
+        <div>
+            <h2 className="mb-0">{program.title}</h2>
+            <p className="text-muted mb-0">Hosted by {program.org_name}</p>
+        </div>
+    </div>
+</div>
                 <Link to={`/programs/${programId}/submit`} className="btn btn-primary">
                     Submit Report
                 </Link>

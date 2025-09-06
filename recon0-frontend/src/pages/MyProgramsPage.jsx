@@ -40,21 +40,28 @@ const MyProgramsPage = () => {
             ) : (
                 <div className="list-group shadow-sm">
                     {programs.map(program => (
-                       <div key={program.id} className="list-group-item">
-    <div className="d-flex w-100 justify-content-between align-items-center">
-        <div>
-            <h5 className="mb-1">{program.title}</h5>
-            <p className="mb-1 text-muted">
-                Bounty Range: ${program.min_bounty} - ${program.max_bounty}
-            </p>
-        </div>
-        <div>
-            {/* --- THIS LINK IS NOW FIXED --- */}
-            <Link to="/manage-reports" className="btn btn-sm btn-outline-secondary me-2">Manage Reports</Link>
-            <Link to={`/programs/${program.id}/analytics`} className="btn btn-sm btn-outline-secondary">Analytics</Link>
-        </div>
-    </div>
-</div>
+                        <div key={program.id} className="list-group-item">
+                            <div className="d-flex w-100 justify-content-between align-items-center">
+                                <div className="d-flex align-items-center">
+                                    <img 
+                                        src={program.org_logo_url || 'data:image/svg+xml;base64,...'} 
+                                        alt={`${program.org_name} logo`}
+                                        className="rounded-circle me-3"
+                                        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                    />
+                                    <div>
+                                        <h5 className="mb-1">{program.title}</h5>
+                                        <p className="mb-1 text-muted">
+                                            Bounty Range: ${program.min_bounty} - ${program.max_bounty}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <Link to="/manage-reports" className="btn btn-sm btn-outline-secondary me-2">Manage Reports</Link>
+                                    <Link to={`/programs/${program.id}/analytics`} className="btn btn-sm btn-outline-secondary">Analytics</Link>
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}

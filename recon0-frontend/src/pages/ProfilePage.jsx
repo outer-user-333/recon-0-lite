@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getProfile, updateProfile, uploadAvatar } from '../lib/apiService';
+import { getProfile, updateProfile, uploadAvatar, uploadOrgLogo } from '../lib/apiService';
 // --- FIX: Import the correct function names ---
 import { calculateLevel, calculateProgress } from "../lib/gamificationUtils";
 
@@ -36,7 +36,8 @@ useEffect(() => {
 }, []);
 
 
-const handleAvatarUpload = async (event) => {
+// This single function handles both avatar and logo uploads
+const handleImageUpload = async (event) => {
     try {
         setUploading(true);
         setError('');
@@ -48,16 +49,19 @@ const handleAvatarUpload = async (event) => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const uploadResult = await uploadAvatar(formData);
+        // Determine which upload function to call based on user role
+        const uploadFunction = userProfile.role === 'organization' ? uploadOrgLogo : uploadAvatar;
+        const uploadResult = await uploadFunction(formData);
+
         if (!uploadResult.success) throw new Error(uploadResult.message);
 
-        // Manually update the profile state with the new avatar URL
         setUserProfile(prevProfile => ({
             ...prevProfile,
             avatar_url: uploadResult.secure_url
         }));
 
-        setMessage('Avatar updated successfully!');
+        const messageText = userProfile.role === 'organization' ? 'Logo updated successfully!' : 'Avatar updated successfully!';
+        setMessage(messageText);
 
     } catch (error) {
         setError(error.message);
@@ -116,43 +120,37 @@ const handleAvatarUpload = async (event) => {
               {error && <div className="alert alert-danger">{error}</div>}
               {message && <div className="alert alert-success">{message}</div>}
 
-              {/* Avatar Upload Section */}
-              <div className="mb-4 text-center">
-                <div className="mb-3">
-                  <img
-                    src={
-                      userProfile?.avatar_url ||
-                      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iNjAiIGZpbGw9IiMzNzQxNTEiLz4KPGNpcmNsZSBjeD0iNjAiIGN5PSI1MCIgcj0iMjUiIGZpbGw9IiNkMWQ1ZGIiLz4KPHBhdGggZD0iTTMwIDEwM2MwLTI0LjMyIDEzLjQzLTYwIDMwLTYwczMwIDM1LjY4IDMwIDYwIiBmaWxsPSIjZDFkNW RiIi8+Cjwvc3ZnPg=="
-                    }
-                    alt="Profile Avatar"
-                    className="rounded-circle"
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
-                <div>
-                  <input
-                    type="file"
-                    id="avatar-upload"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    style={{ display: "none" }}
-                  />
-                  <label
-                    htmlFor="avatar-upload"
-                    className="btn btn-outline-primary btn-sm"
-                    style={{ cursor: "pointer" }}
-                  >
-                    {uploading ? "Uploading..." : "Change Avatar"}
-                  </label>
-                </div>
-                <small className="text-muted d-block mt-2">
-                  Max 2MB. JPG, PNG, GIF supported.
-                </small>
-              </div>
+         {/* Avatar / Logo Upload Section */}
+<div className="mb-4 text-center">
+    <div className="mb-3">
+        <img 
+            src={userProfile?.avatar_url || 'data:image/svg+xml;base64,...'} 
+            alt={userProfile?.role === 'organization' ? 'Organization Logo' : 'Profile Avatar'}
+            className="rounded-circle"
+            style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+        />
+    </div>
+    <div>
+        <input
+            type="file"
+            id="image-upload"
+            accept="image/*"
+            onChange={handleImageUpload} // Use the new unified handler
+            disabled={uploading}
+            style={{ display: 'none' }}
+        />
+        <label
+            htmlFor="image-upload"
+            className="btn btn-outline-primary btn-sm"
+            style={{ cursor: 'pointer' }}
+        >
+            {uploading ? 'Uploading...' : (userProfile?.role === 'organization' ? 'Change Logo' : 'Change Avatar')}
+        </label>
+    </div>
+    <small className="text-muted d-block mt-2">
+        Max 2MB. JPG, PNG, GIF supported.
+    </small>
+</div>
 
               <hr />
 
