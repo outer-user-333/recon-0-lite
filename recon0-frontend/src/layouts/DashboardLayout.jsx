@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { getProfile, logout, getToken } from "../lib/apiService";
+import { loginChatUser } from '../lib/chatAuthService';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const checkAuthAndFetchProfile = async () => {
+       loginChatUser(); // <-- ADD THIS LINE
       const token = getToken();
       if (!token) {
         // If no token, redirect to login page
