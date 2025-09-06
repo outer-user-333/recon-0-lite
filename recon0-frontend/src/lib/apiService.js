@@ -182,3 +182,25 @@ export const updateReportStatus = (reportId, status) => {
 export const getProgramAnalytics = (programId) => {
     return apiFetch(`/organization/programs/${programId}/analytics`);
 };
+
+// --- COMMON FUNCTIONS ---
+
+export const getLeaderboard = () => {
+    return apiFetch('/leaderboard');
+};
+
+// --- NOTIFICATION FUNCTIONS ---
+
+export const getNotifications = () => {
+    return apiFetch('/notifications');
+};
+
+// --- ACHIEVEMENT FUNCTIONS ---
+
+export const getAllAchievements = () => {
+    return apiFetch('/achievements');
+};
+
+export const getMyAchievements = () => {
+    return apiFetch('/achievements/my');
+};

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getNotifications } from '../lib/apiService';
 
 const NotificationsPage = () => {
     const [notifications, setNotifications] = useState([]);
@@ -8,20 +9,11 @@ const NotificationsPage = () => {
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
-                setLoading(true);
-                setError('');
-                const response = await fetch('http://localhost:3001/api/v1/notifications');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const result = await response.json();
+                const result = await getNotifications();
                 if (result.success) {
                     setNotifications(result.data);
-                } else {
-                    throw new Error(result.message || 'Failed to fetch notifications.');
                 }
             } catch (err) {
-                console.error("Fetch Error:", err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -33,20 +25,14 @@ const NotificationsPage = () => {
 
     const getIconForType = (type) => {
         switch (type) {
-            case 'report_update':
-                return 'fas fa-shield-alt text-success';
-            case 'new_program':
-                return 'fas fa-bullhorn text-info';
-            case 'payout':
-                return 'fas fa-dollar-sign text-warning';
-            case 'comment':
-                return 'fas fa-comment text-primary';
-            default:
-                return 'fas fa-bell text-secondary';
+            case 'report_update': return 'fas fa-shield-alt text-success';
+            case 'new_program': return 'fas fa-bullhorn text-info';
+            case 'payout': return 'fas fa-dollar-sign text-warning';
+            case 'comment': return 'fas fa-comment text-primary';
+            default: return 'fas fa-bell text-secondary';
         }
     };
-    
-    // This function now correctly marks a notification as read
+
     const handleMarkAsRead = (id) => {
         setNotifications(notifications.map(n => 
             n.id === id ? { ...n, is_read: true } : n
@@ -55,7 +41,7 @@ const NotificationsPage = () => {
 
     const renderContent = () => {
         if (loading) return <p>Loading notifications...</p>;
-        if (error) return <div className="alert alert-danger">Error: {error}</div>;
+        if (error) return <div className="alert alert-danger">{error}</div>;
         if (notifications.length === 0) return <p>You have no new notifications.</p>;
 
         return (
@@ -85,25 +71,11 @@ const NotificationsPage = () => {
 
     return (
         <>
-            {/* ===== ADDED STYLES FOR THIS COMPONENT ===== */}
             <style>{`
-                .notification-icon {
-                    font-size: 1.5rem;
-                    width: 40px;
-                    text-align: center;
-                }
-                .unread-dot {
-                    height: 10px;
-                    width: 10px;
-                    background-color: #0d6efd; /* Bootstrap primary blue */
-                    border-radius: 50%;
-                    display: inline-block;
-                    flex-shrink: 0;
-                }
+                .notification-icon { font-size: 1.5rem; width: 40px; text-align: center; }
+                .unread-dot { height: 10px; width: 10px; background-color: #0d6efd; border-radius: 50%; display: inline-block; flex-shrink: 0; }
             `}</style>
-            {/* ============================================== */}
-
-            <div className="container mt-5">
+            <div>
                 <h2 className="mb-4">Notifications</h2>
                 <p className="text-muted mb-4">Stay up to date with the latest activity on your account.</p>
                 {renderContent()}
@@ -113,4 +85,3 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
-

@@ -91,6 +91,33 @@ let mockReports = [
 ];
 
 // ... (keep mockLeaderboard from before)
+let mockLeaderboard = [
+  { rank: 1, username: 'cyb3r_ninja', reputation_points: 9850 },
+  { rank: 2, username: 'glitch_hunter', reputation_points: 9500 },
+  { rank: 3, username: 'exploit_exp', reputation_points: 8900 },
+  { rank: 4, username: 'asim_hax', reputation_points: 150 }, // Added our test user
+];
+
+
+let mockNotifications = [
+  { id: 1, user_id: 'user-1', type: 'report_update', message: "Your report 'XSS in Profile Page' was accepted.", is_read: false, created_at: "2025-09-06T15:30:00Z" },
+  { id: 2, user_id: 'user-1', type: 'new_program', message: 'A new program "CloudNet Security" has been launched.', is_read: false, created_at: "2025-09-05T21:00:00Z" },
+  { id: 3, user_id: 'user-1', type: 'payout', message: "You have been awarded a $500 bounty for a previous report.", is_read: true, created_at: "2025-09-04T16:30:00Z" },
+  { id: 4, user_id: 'user-2', type: 'comment', message: "A hacker left a comment on your report #1824.", is_read: false, created_at: "2025-09-06T08:15:00Z" },
+];
+
+
+const allAchievements = [
+  { id: "ach-1", name: "First Find", description: "Submit your first valid report.", icon: "fa-flag" },
+  { id: "ach-2", name: "Bug Squasher", description: "Submit 5 valid reports.", icon: "fa-hammer" },
+  { id: "ach-3", name: "Critical Thinker", description: "Get a critical severity report accepted.", icon: "fa-brain" },
+  { id: "ach-4", name: "Specialist", description: "Reach Specialist Level (250+ RP).", icon: "fa-star" },
+];
+
+// Maps a user ID to an array of earned achievement IDs
+let userAchievements = {
+  'user-1': ["ach-1", "ach-3"],
+};
 
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
@@ -488,7 +515,37 @@ app.get('/api/v1/organization/programs/:programId/analytics', authenticateToken,
     res.json({ success: true, data: analyticsData });
 });
 
+
+// Get notifications for the currently logged-in user
+app.get('/api/v1/notifications', authenticateToken, (req, res) => {
+    const loggedInUserId = req.user.id;
+    const userNotifications = mockNotifications.filter(n => n.user_id === loggedInUserId);
+
+    console.log(`Fetched ${userNotifications.length} notifications for user ID: ${loggedInUserId}`);
+    res.json({ success: true, data: userNotifications });
+});
+
+
+
+// --- ACHIEVEMENT ENDPOINTS ---
+
+// Get the list of ALL possible achievements
+app.get('/api/v1/achievements', authenticateToken, (req, res) => {
+    console.log('Fetched all achievements');
+    res.json({ success: true, data: allAchievements });
+});
+
+// Get the achievements earned by the currently logged-in user
+app.get('/api/v1/achievements/my', authenticateToken, (req, res) => {
+    const loggedInUserId = req.user.id;
+    const earnedIds = userAchievements[loggedInUserId] || [];
+
+    console.log(`Fetched earned achievements for user ID: ${loggedInUserId}`);
+    res.json({ success: true, data: earnedIds });
+});
+
 // --- SERVER LISTENING ---
 app.listen(PORT, () =>
   console.log(`Mock API server is running on http://localhost:${PORT}`)
 );
+
