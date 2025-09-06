@@ -151,3 +151,34 @@ export const submitReport = (reportData) => {
         body: JSON.stringify(reportData),
     });
 };
+
+// --- ORGANIZATION FUNCTIONS ---
+
+export const getMyPrograms = () => {
+    return apiFetch('/organization/my-programs');
+};
+
+
+export const createProgram = (programData) => {
+    return apiFetch('/organization/my-programs', {
+        method: 'POST',
+        body: JSON.stringify(programData),
+    });
+};
+
+export const getOrgReports = () => {
+    return apiFetch('/organization/reports');
+};
+
+// --- TRIAGE FUNCTIONS ---
+
+export const updateReportStatus = (reportId, status) => {
+    return apiFetch(`/organization/reports/${reportId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    });
+};
+
+export const getProgramAnalytics = (programId) => {
+    return apiFetch(`/organization/programs/${programId}/analytics`);
+};

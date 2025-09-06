@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseChatClient';
+import { supabase } from '../lib/supabaseChatClient'; // Note: using the specific chat client
+import { getProfile } from '../lib/apiService';
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
@@ -8,69 +9,42 @@ const ChatPage = () => {
     const [error, setError] = useState('');
     const messagesEndRef = useRef(null);
 
+    // Fetch the current user's profile to get their username
     useEffect(() => {
-        // 1. Fetch initial chat history
-        const fetchMessages = async () => {
+        getProfile().then(result => {
+            if (result.success) {
+                setUserProfile(result.data);
+            }
+        }).catch(err => setError(err.message));
+    }, []);
+
+    // Fetch initial messages and set up real-time subscription
+    useEffect(() => {
+        const fetchInitialMessages = async () => {
             const { data, error } = await supabase
                 .from('chat_messages')
-                .select(`
-                    id,
-                    content,
-                    created_at,
-                    sender_id,
-                    profile:profiles ( username )
-                `)
+                .select('*')
                 .order('created_at', { ascending: true });
 
-            if (error) {
-                console.error('Error fetching messages:', error);
-                setError('Could not fetch chat history.');
-            } else {
-                setMessages(data);
-            }
+            if (error) setError(error.message);
+            else setMessages(data);
         };
 
-        // 2. Fetch current user's profile
-        const fetchUserProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profile } = await supabase.from('profiles').select('id, username').eq('id', user.id).single();
-                setUserProfile(profile);
-            }
-        };
+        fetchInitialMessages();
 
-        fetchUserProfile();
-        fetchMessages();
-
-        // 3. Subscribe to real-time updates
-        const channel = supabase.channel('public:chat_messages')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-                (payload) => {
-                    // When a new message comes in, we need to get the sender's username
-                    const fetchNewMessageProfile = async () => {
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('username')
-                            .eq('id', payload.new.sender_id)
-                            .single();
-                        
-                        const messageWithProfile = { ...payload.new, profile };
-                        setMessages(currentMessages => [...currentMessages, messageWithProfile]);
-                    };
-                    fetchNewMessageProfile();
-                }
-            )
+        const channel = supabase
+            .channel('public:chat_messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+                setMessages(currentMessages => [...currentMessages, payload.new]);
+            })
             .subscribe();
 
-        // 4. Cleanup subscription on component unmount
         return () => {
             supabase.removeChannel(channel);
         };
     }, []);
 
-    // Effect to scroll to the bottom when new messages arrive
+    // Scroll to the bottom when new messages arrive
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -79,62 +53,45 @@ const ChatPage = () => {
         e.preventDefault();
         if (!newMessage.trim() || !userProfile) return;
 
-        const { error } = await supabase
-            .from('chat_messages')
-            .insert({
-                content: newMessage,
-                sender_id: userProfile.id
-            });
+        const messageToSend = {
+            sender_username: userProfile.username,
+            content: newMessage.trim(),
+        };
 
-        if (error) {
-            console.error('Error sending message:', error);
-            setError('Failed to send message.');
-        } else {
-            setNewMessage(''); // Clear input only on successful send
-        }
+        const { error } = await supabase.from('chat_messages').insert(messageToSend);
+        if (error) setError(error.message);
+        else setNewMessage(''); // Clear input box on success
     };
 
     return (
-        <div className="container mt-5">
+        <div>
             <h2 className="mb-4">Safe Harbor Chat</h2>
-            <p className="text-muted mb-4">A real-time global chat room for the community.</p>
             {error && <div className="alert alert-danger">{error}</div>}
-
-            <div className="card shadow-lg" style={{ height: '70vh' }}>
-                <div className="card-body d-flex flex-column" style={{ overflowY: 'auto' }}>
-                    <div className="flex-grow-1">
-                        {messages.map((msg) => (
-                            <div key={msg.id} className="mb-3 d-flex">
-                                <div className="avatar me-3 bg-secondary text-white">
-                                    {msg.profile?.username.charAt(0).toUpperCase() || '?'}
-                                </div>
-                                <div className="w-100">
-                                    <div className="d-flex justify-content-between">
-                                        <span className="fw-bold">{msg.profile?.username || 'User'}</span>
-                                        <small className="text-muted">{new Date(msg.created_at).toLocaleTimeString()}</small>
-                                    </div>
-                                    <p className="mb-0 bg-light p-2 rounded">{msg.content}</p>
-                                </div>
+            <div className="card shadow-sm">
+                <div className="card-body chat-box" style={{ height: '60vh', overflowY: 'auto' }}>
+                    {messages.map(msg => (
+                        <div key={msg.id} className={`mb-2 ${msg.sender_username === userProfile?.username ? 'text-end' : ''}`}>
+                            <div className={`d-inline-block p-2 rounded ${msg.sender_username === userProfile?.username ? 'bg-primary text-white' : 'bg-light'}`}>
+                                <strong>{msg.sender_username}:</strong> {msg.content}
                             </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
+                            <div className="text-muted small">
+                                {new Date(msg.created_at).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    ))}
+                    <div ref={messagesEndRef} />
                 </div>
                 <div className="card-footer">
-                    <form onSubmit={handleSendMessage}>
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Type your message..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                disabled={!userProfile}
-                            />
-                            <button className="btn btn-primary" type="submit" disabled={!userProfile}>
-                                Send
-                            </button>
-                        </div>
+                    <form onSubmit={handleSendMessage} className="d-flex">
+                        <input
+                            type="text"
+                            className="form-control me-2"
+                            placeholder="Type a message..."
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            disabled={!userProfile}
+                        />
+                        <button type="submit" className="btn btn-primary" disabled={!userProfile}>Send</button>
                     </form>
                 </div>
             </div>
@@ -143,4 +100,3 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
-

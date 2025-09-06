@@ -1,126 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getOrgReports } from '../lib/apiService';
 
 const ManageReportsPage = () => {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchOrgReports = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        // // This endpoint will fetch all reports for the organization's programs
-        // const response = await fetch('http://localhost:3001/api/v1/reports/organization');
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const result = await getOrgReports();
+                if (result.success) {
+                    setReports(result.data);
+                }
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReports();
+    }, []);
 
-         // ** THIS IS THE ONLY LINE THAT HAS CHANGED **
-                const response = await fetch('http://localhost:3001/api/v1/reports/organization');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = await response.json();
-        if (result.success) {
-          setReports(result.data);
-        } else {
-          throw new Error(result.message || 'Failed to fetch organization reports.');
-        }
-      } catch (err) {
-        console.error("Fetch Error:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    const getStatusBadge = (status) => {
+        const lowerStatus = status.toLowerCase();
+        if (lowerStatus === 'accepted') return 'bg-success';
+        if (lowerStatus === 'triaging') return 'bg-warning text-dark';
+        if (lowerStatus === 'new') return 'bg-primary';
+        return 'bg-secondary';
     };
 
-    fetchOrgReports();
-  }, []);
-
-  const getStatusBadge = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'accepted':
-        return 'bg-success';
-      case 'resolved':
-        return 'bg-primary';
-      case 'triaging':
-        return 'bg-warning text-dark';
-      case 'new':
-        return 'bg-info text-dark';
-      case 'duplicate':
-      case 'invalid':
-        return 'bg-secondary';
-      default:
-        return 'bg-light text-dark';
-    }
-  };
-
-  const renderContent = () => {
-    if (loading) {
-      return <p>Loading reports...</p>;
-    }
-    if (error) {
-      return <div className="alert alert-danger">Error: {error}</div>;
-    }
-    if (reports.length === 0) {
-      return (
-        <div className="card shadow-sm">
-          <div className="card-body text-center">
-            <p className="mb-0">No reports have been submitted to your programs yet.</p>
-          </div>
-        </div>
-      );
-    }
+    if (loading) return <div>Loading incoming reports...</div>;
+    if (error) return <div className="alert alert-danger">{error}</div>;
 
     return (
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <div className="table-responsive">
-            <table className="table table-hover align-middle">
-              <thead className="table-dark">
-                <tr>
-                  <th scope="col">Report Title</th>
-                  <th scope="col">Program</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Reporter</th>
-                  <th scope="col">Submitted On</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report) => (
-                  <tr key={report.id}>
-                    <td>{report.title}</td>
-                    <td>{report.program_name}</td>
-                    <td>
-                      <span className={`badge ${getStatusBadge(report.status)}`}>
-                        {report.status}
-                      </span>
-                    </td>
-                    <td>{report.reporter_username}</td>
-                    <td>{new Date(report.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <Link to={`/reports/${report.id}`} className="btn btn-outline-primary btn-sm">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div>
+            <h2 className="mb-4">Manage Reports</h2>
+            {reports.length === 0 ? (
+                <p>No reports have been submitted to your programs yet.</p>
+            ) : (
+                <div className="list-group shadow-sm">
+                    {reports.map(report => (
+                        <Link to={`/reports/${report.id}`} key={report.id} className="list-group-item list-group-item-action">
+                            <div className="d-flex w-100 justify-content-between">
+                                <h5 className="mb-1">{report.title}</h5>
+                                <span className={`badge ${getStatusBadge(report.status)}`}>{report.status}</span>
+                            </div>
+                            <p className="mb-1">
+                                Program: <strong>{report.program_name}</strong>
+                            </p>
+                            <small className="text-muted">Severity: {report.severity}</small>
+                        </Link>
+                    ))}
+                </div>
+            )}
         </div>
-      </div>
     );
-  };
-
-  return (
-    <div className="container mt-5">
-      <h2 className="mb-4">Manage Reports</h2>
-      <p className="text-muted mb-4">Review, triage, and respond to submitted vulnerabilities.</p>
-      {renderContent()}
-    </div>
-  );
 };
 
 export default ManageReportsPage;
-

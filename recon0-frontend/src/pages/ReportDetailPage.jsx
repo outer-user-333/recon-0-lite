@@ -1,20 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getReportById } from '../lib/apiService';
+import { getReportById, getProfile, updateReportStatus } from '../lib/apiService';
 
 const ReportDetailPage = () => {
     const { reportId } = useParams();
     const [report, setReport] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const [selectedStatus, setSelectedStatus] = useState('');
+    const [isUpdating, setIsUpdating] = useState(false);
+
     useEffect(() => {
-        const fetchReport = async () => {
+        const fetchData = async () => {
             if (!reportId) return;
             try {
-                const result = await getReportById(reportId);
-                if (result.success) {
-                    setReport(result.data);
+                const [reportResult, profileResult] = await Promise.all([
+                    getReportById(reportId),
+                    getProfile()
+                ]);
+
+                if (reportResult.success) {
+                    setReport(reportResult.data);
+                    setSelectedStatus(reportResult.data.status);
+                }
+                if (profileResult.success) {
+                    setUserProfile(profileResult.data);
                 }
             } catch (err) {
                 setError(err.message);
@@ -22,15 +34,39 @@ const ReportDetailPage = () => {
                 setLoading(false);
             }
         };
-        fetchReport();
+        fetchData();
     }, [reportId]);
+
+    const handleStatusUpdate = async () => {
+        setIsUpdating(true);
+        setError('');
+        try {
+            const result = await updateReportStatus(report.id, selectedStatus);
+            if (result.success) {
+                setReport(result.data);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const canTriage = userProfile?.role === 'organization';
 
     const getSeverityClass = (severity) => {
         const lowerSeverity = severity?.toLowerCase();
         if (lowerSeverity === 'critical') return 'text-danger';
         if (lowerSeverity === 'high') return 'text-warning';
-        if (lowerSeverity === 'medium') return 'text-primary';
-        return 'text-info';
+        return 'text-primary';
+    };
+
+    const getStatusBadge = (status) => {
+        const lowerStatus = status?.toLowerCase();
+        if (lowerStatus === 'accepted') return 'bg-success';
+        if (lowerStatus === 'triaging') return 'bg-warning text-dark';
+        if (lowerStatus === 'new') return 'bg-primary';
+        return 'bg-secondary';
     };
 
     if (loading) return <div>Loading report details...</div>;
@@ -42,46 +78,51 @@ const ReportDetailPage = () => {
             <h2 className="mb-1">{report.title}</h2>
             <p className="text-muted">Reported to: {report.program_name}</p>
             <hr />
-            <div className="row">
+            <div className="row mb-4">
                 <div className="col-md-3">
                     <strong>Status:</strong>
-                    <p>{report.status}</p>
+                    <p><span className={`badge ${getStatusBadge(report.status)}`}>{report.status}</span></p>
                 </div>
                 <div className="col-md-3">
                     <strong>Severity:</strong>
-                    <p className={getSeverityClass(report.severity)}>{report.severity}</p>
+                    <p className={`fw-bold ${getSeverityClass(report.severity)}`}>{report.severity}</p>
                 </div>
             </div>
 
-            {/* In a real app, these sections would be more detailed */}
-           <>
-    <div className="card mt-4 shadow-sm">
-        <div className="card-header">
-            <h5>Vulnerability Description</h5>
-        </div>
-        <div className="card-body">
-            <p style={{ whiteSpace: 'pre-wrap' }}>{report.description}</p>
-        </div>
-    </div>
+            {canTriage && (
+                <div className="card bg-light border-secondary mb-4">
+                    <div className="card-body">
+                        <h5 className="card-title">Triage Actions</h5>
+                        <div className="input-group">
+                            <select className="form-select" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+                                <option value="New">New</option>
+                                <option value="Triaging">Triaging</option>
+                                <option value="Accepted">Accepted</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Duplicate">Duplicate</option>
+                                <option value="Invalid">Invalid</option>
+                            </select>
+                            <button className="btn btn-primary" onClick={handleStatusUpdate} disabled={isUpdating}>
+                                {isUpdating ? 'Updating...' : 'Update Status'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-    <div className="card mt-4 shadow-sm">
-        <div className="card-header">
-            <h5>Steps to Reproduce</h5>
-        </div>
-        <div className="card-body">
-            <p style={{ whiteSpace: 'pre-wrap' }}>{report.steps_to_reproduce}</p>
-        </div>
-    </div>
-
-    <div className="card mt-4 shadow-sm">
-        <div className="card-header">
-            <h5>Impact</h5>
-        </div>
-        <div className="card-body">
-            <p style={{ whiteSpace: 'pre-wrap' }}>{report.impact}</p>
-        </div>
-    </div>
-</>
+            {/* === All Report Details Sections === */}
+            <div className="card mt-4 shadow-sm">
+                <div className="card-header"><h5>Vulnerability Description</h5></div>
+                <div className="card-body"><p style={{ whiteSpace: 'pre-wrap' }}>{report.description}</p></div>
+            </div>
+            <div className="card mt-4 shadow-sm">
+                <div className="card-header"><h5>Steps to Reproduce</h5></div>
+                <div className="card-body"><p style={{ whiteSpace: 'pre-wrap' }}>{report.steps_to_reproduce}</p></div>
+            </div>
+            <div className="card mt-4 shadow-sm">
+                <div className="card-header"><h5>Impact</h5></div>
+                <div className="card-body"><p style={{ whiteSpace: 'pre-wrap' }}>{report.impact}</p></div>
+            </div>
         </div>
     );
 };

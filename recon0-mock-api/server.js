@@ -28,25 +28,69 @@ const upload = multer({ storage: storage });
 
 
 // --- IN-MEMORY DATABASE ---
-// In-memory array to simulate a user database
-let mockUsers = [];
-let userIdCounter = 1;
+let mockUsers = [
+    {
+        id: 'user-1',
+        email: 'hacker@example.com',
+        password: 'password123',
+        username: 'asim_hax',
+        full_name: 'Asim the Hacker',
+        role: 'hacker',
+        reputation_points: 150,
+        avatar_url: null,
+        bio: 'Just a friendly neighborhood hacker.',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'user-2',
+        email: 'org@example.com',
+        password: 'password123',
+        username: 'CyberCorpAdmin',
+        full_name: 'CyberCorp',
+        role: 'organization',
+        reputation_points: 0,
+        avatar_url: null,
+        bio: 'Securing the future.',
+        created_at: new Date().toISOString(),
+    },
+     {
+        id: 'user-3',
+        email: 'asdf@g.i',
+        password: '12345',
+        username: 'CyberCorpAdmin',
+        full_name: 'CyberCorp',
+        role: 'hacker',
+        reputation_points: 0,
+        avatar_url: null,
+        bio: 'Securing the future.',
+        created_at: new Date().toISOString(),
+    },
+     {
+        id: 'user-4',
+        email: 'qwer@g.i',
+        password: '12345',
+        username: 'CyberCorORG',
+        full_name: 'CyberCorp',
+        role: 'organization',
+        reputation_points: 0,
+        avatar_url: null,
+        bio: 'Securing the future.',
+        created_at: new Date().toISOString(),
+    }
+];
+let userIdCounter = 3;
+
 let mockPrograms = [
-  { id: 'prog-1', org_name: 'CyberCorp', title: 'Web App Pentest', min_bounty: 500, max_bounty: 5000, tags: ['web', 'pentest'] },
-  { id: 'prog-2', org_name: 'SecureNet', title: 'API Security Assessment', min_bounty: 250, max_bounty: 3000, tags: ['api', 'security'] },
+  { id: 'prog-1', organization_id: 'user-2', org_name: 'CyberCorp', title: 'Web App Pentest', min_bounty: 500, max_bounty: 5000, tags: ['web', 'pentest'] },
+  { id: 'prog-2', organization_id: 'user-2', org_name: 'CyberCorp', title: 'API Security Assessment', min_bounty: 250, max_bounty: 3000, tags: ['api', 'security'] },
 ];
 
 let mockReports = [
   { id: 'report-1', program_id: 'prog-1', program_name: 'Web App Pentest', reporter_id: 'user-1', title: 'XSS in Profile Page', severity: 'Medium', status: 'New' },
-  { id: 'report-2', program_id: 'prog-1', program_name: 'Web App Pentest', reporter_id: 'user-2', title: 'IDOR to view invoices', severity: 'Critical', status: 'Triaging' },
   { id: 'report-3', program_id: 'prog-2', program_name: 'API Security Assessment', reporter_id: 'user-1', title: 'Auth Bypass via JWT Flaw', severity: 'High', status: 'Accepted' },
 ];
 
-let mockLeaderboard = [
-  { rank: 1, username: 'cyb3r_ninja', reputation_points: 9850 },
-  { rank: 2, username: 'glitch_hunter', reputation_points: 9500 },
-  { rank: 3, username: 'exploit_exp', reputation_points: 8900 },
-];
+// ... (keep mockLeaderboard from before)
 
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
@@ -302,8 +346,147 @@ app.post('/api/v1/reports', authenticateToken, (req, res) => {
 });
 
 
+// --- ORGANIZATION ENDPOINTS ---
+// Get all programs for the currently logged-in organization
+app.get('/api/v1/organization/my-programs', authenticateToken, (req, res) => {
+    // This is a protected route for organizations only
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
+    }
+
+    // --- SIMPLIFICATION FOR MOCKING ---
+    // For our mock environment, we'll return ALL sample programs to ANY logged-in organization.
+    // This makes testing easier, as you don't have to log in with a specific hardcoded user.
+    // The real backend will use the loggedInOrgId to filter the database properly.
+    const loggedInOrgId = req.user.id;
+    console.log(`Fetched all mock programs for organization ID: ${loggedInOrgId}`);
+    res.json({ success: true, data: mockPrograms });
+});
 
 
+// Create a new program
+app.post('/api/v1/organization/my-programs', authenticateToken, (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
+    }
+
+    const organization = mockUsers.find(u => u.id === req.user.id);
+    if (!organization) {
+        return res.status(404).json({ success: false, message: 'Organization user not found.' });
+    }
+
+    const newProgram = {
+        id: `prog-${Date.now()}`,
+        organization_id: organization.id,
+        org_name: organization.full_name,
+        // Destructure all fields from the request body based on the schema
+        title: req.body.title,
+        description: req.body.description,
+        policy: req.body.policy,
+        scope: req.body.scope,
+        out_of_scope: req.body.out_of_scope,
+        min_bounty: parseInt(req.body.min_bounty, 10),
+        max_bounty: parseInt(req.body.max_bounty, 10),
+        tags: req.body.tags // Expecting an array of strings
+    };
+
+    mockPrograms.push(newProgram);
+    console.log('New program created:', newProgram);
+    res.status(201).json({ success: true, data: newProgram });
+});
+
+// Get all reports submitted to the logged-in organization's programs
+app.get('/api/v1/organization/reports', authenticateToken, (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
+    }
+
+    const loggedInOrgId = req.user.id;
+
+    // Step 1: Find all program IDs belonging to this organization
+    const orgProgramIds = mockPrograms
+        .filter(p => p.organization_id === loggedInOrgId)
+        .map(p => p.id);
+
+    // Step 2: Find all reports submitted to those programs
+    const incomingReports = mockReports.filter(r => orgProgramIds.includes(r.program_id));
+
+    console.log(`Fetched ${incomingReports.length} incoming reports for organization ID: ${loggedInOrgId}`);
+    res.json({ success: true, data: incomingReports });
+});
+
+
+// Triage a report (update its status)
+app.patch('/api/v1/organization/reports/:reportId', authenticateToken, (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
+    }
+
+    const loggedInOrgId = req.user.id;
+    const { reportId } = req.params;
+    const { status } = req.body;
+
+    const reportIndex = mockReports.findIndex(r => r.id === reportId);
+    if (reportIndex === -1) {
+        return res.status(404).json({ success: false, message: 'Report not found.' });
+    }
+
+    // Security Check: Verify this organization owns the program the report was submitted to.
+    const program = mockPrograms.find(p => p.id === mockReports[reportIndex].program_id);
+    if (!program || program.organization_id !== loggedInOrgId) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You do not own this program.' });
+    }
+
+    // Update the status in our in-memory array
+    mockReports[reportIndex].status = status;
+
+    console.log(`Updated status of report ${reportId} to ${status}`);
+    // Return the updated report object
+    res.json({ success: true, data: mockReports[reportIndex] });
+});
+
+
+
+// Get analytics data for a specific program
+app.get('/api/v1/organization/programs/:programId/analytics', authenticateToken, (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied.' });
+    }
+
+    const loggedInOrgId = req.user.id;
+    const { programId } = req.params;
+    const program = mockPrograms.find(p => p.id === programId);
+
+    // Security Check: Verify this organization owns the program.
+    if (!program || program.organization_id !== loggedInOrgId) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You do not own this program.' });
+    }
+
+    // For the mock API, we'll return a hardcoded but realistic analytics object.
+    const analyticsData = {
+        programTitle: program.title,
+        kpis: {
+            totalReports: 132,
+            resolvedReports: 98,
+            avgTimeToBountyDays: 14,
+            totalPaidOut: 25400,
+        },
+        reportsBySeverity: [
+            { severity: "Critical", count: 12 },
+            { severity: "High", count: 35 },
+            { severity: "Medium", count: 68 },
+            { severity: "Low", count: 17 },
+        ],
+        submissionTrend: [
+            { date: "Aug 1", count: 15 }, { date: "Aug 8", count: 22 },
+            { date: "Aug 15", count: 18 }, { date: "Aug 22", count: 25 },
+            { date: "Aug 29", count: 30 }, { date: "Sep 5", count: 22 },
+        ],
+    };
+
+    console.log(`Fetched analytics for program: ${program.title}`);
+    res.json({ success: true, data: analyticsData });
+});
 
 // --- SERVER LISTENING ---
 app.listen(PORT, () =>
