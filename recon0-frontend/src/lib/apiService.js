@@ -77,3 +77,41 @@ export const logout = () => {
     // To log out, we just remove the token from storage.
     removeToken();
 };
+
+
+// --- PROFILE FUNCTIONS ---
+
+export const getProfile = () => {
+    // Our core apiFetch function handles the auth header automatically
+    return apiFetch('/profile');
+};
+
+export const updateProfile = (profileData) => {
+    // profileData is an object with { fullName, username, bio }
+    return apiFetch('/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData),
+    });
+};
+
+export const uploadAvatar = async (formData) => {
+    // File uploads are special and don't use the 'Content-Type': 'application/json' header,
+    // so we use a direct fetch call here. The browser sets the correct header automatically.
+    const token = getToken();
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
+        method: 'POST',
+        body: formData,
+        headers,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error uploading file');
+    }
+    return response.json();
+};

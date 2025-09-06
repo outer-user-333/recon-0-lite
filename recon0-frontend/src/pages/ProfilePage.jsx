@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseChatClient";
+import { getProfile, updateProfile, uploadAvatar } from '../lib/apiService';
 // --- FIX: Import the correct function names ---
 import { calculateLevel, calculateProgress } from "../lib/gamificationUtils";
 
@@ -15,173 +15,78 @@ const ProfilePage = () => {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
     const fetchUserProfile = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not found.");
-
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (error && error.code !== "PGRST116") {
-          throw error;
+        try {
+            const result = await getProfile();
+            if (result.success) {
+                setUserProfile(result.data);
+                setFullName(result.data.full_name || '');
+                setUsername(result.data.username || '');
+                setBio(result.data.bio || '');
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-
-        if (profile) {
-          setUserProfile(profile);
-          setFullName(profile.full_name || "");
-          setUsername(profile.username || "");
-          setBio(profile.bio || "");
-        } else {
-          // If no profile exists, set up a default local state
-          setUserProfile({
-            id: user.id,
-            email: user.email,
-            full_name: "",
-            username: "",
-            bio: "",
-            reputation_points: 0,
-            role: "hacker", // Default role for new users
-          });
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchUserProfile();
-  }, []);
+}, []);
 
-  useEffect(() => {
-    if (!userProfile?.id) return; // Only subscribe if we have a profile with an ID
 
-    const channel = supabase
-      .channel(`public:profiles:id=eq.${userProfile.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter: `id=eq.${userProfile.id}`,
-        },
-        (payload) => {
-          console.log("Profile update received!", payload.new);
-          // Update the form fields as well to stay in sync
-          const newProfile = payload.new;
-          setUserProfile(newProfile);
-          setFullName(newProfile.full_name || "");
-          setUsername(newProfile.username || "");
-          setBio(newProfile.bio || "");
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userProfile?.id]); // Depend on the ID to re-subscribe if the user changes
-
-  const handleAvatarUpload = async (event) => {
+const handleAvatarUpload = async (event) => {
     try {
-      setUploading(true);
-      setError("");
-      setMessage("");
+        setUploading(true);
+        setError('');
+        setMessage('');
 
-      const file = event.target.files[0];
-      if (!file) throw new Error("You must select an image file to upload.");
+        const file = event.target.files[0];
+        if (!file) throw new Error('You must select an image file to upload.');
 
-      const formData = new FormData();
-      formData.append("file", file);
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const uploadResponse = await fetch(
-        "http://localhost:3001/api/v1/upload/avatar",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+        const uploadResult = await uploadAvatar(formData);
+        if (!uploadResult.success) throw new Error(uploadResult.message);
 
-      const uploadResult = await uploadResponse.json();
-      if (!uploadResult.success)
-        throw new Error(uploadResult.message || "Failed to upload image.");
+        // Manually update the profile state with the new avatar URL
+        setUserProfile(prevProfile => ({
+            ...prevProfile,
+            avatar_url: uploadResult.secure_url
+        }));
 
-      const publicUrl = uploadResult.secure_url;
+        setMessage('Avatar updated successfully!');
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      const { error: updateError } = await supabase.from("profiles").upsert({
-        id: user.id,
-        avatar_url: publicUrl,
-        // Ensure role is preserved or set for new users
-        role: userProfile.role || "hacker",
-      });
-
-      if (updateError) throw updateError;
-
-      setMessage("Avatar updated successfully!");
     } catch (error) {
-      setError(error.message);
+        setError(error.message);
     } finally {
-      setUploading(false);
+        setUploading(false);
     }
-  };
+};
 
-  const handleProfileUpdate = async (e) => {
+ const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
+    setMessage('');
+    setError('');
     setLoading(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found.");
+        const profileData = { fullName, username, bio };
+        const result = await updateProfile(profileData);
 
-      const updates = {
-        id: user.id,
-        full_name: fullName,
-        username: username,
-        bio: bio,
-        role: userProfile.role || "hacker",
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase.from("profiles").upsert(updates);
-
-      if (error) {
-        if (
-          error.message.includes(
-            'duplicate key value violates unique constraint "profiles_username_key"'
-          )
-        ) {
-          throw new Error(
-            "This username is already taken. Please choose another one."
-          );
+        if (result.success) {
+            // Manually update state with the fresh data from the server
+            setUserProfile(result.data);
+            setMessage('Profile updated successfully!');
         }
-        throw error;
-      }
-
-      setMessage("Profile updated successfully!");
     } catch (err) {
-      setError(err.message);
+        setError(err.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-
+};
   if (loading) return <div>Loading profile...</div>;
   if (error && !userProfile)
     return <div className="alert alert-danger">Error: {error}</div>;
