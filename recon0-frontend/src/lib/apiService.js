@@ -121,3 +121,14 @@ export const uploadAvatar = async (formData) => {
 export const getStats = () => {
     return apiFetch('/stats');
 };
+
+
+// --- PROGRAM FUNCTIONS ---
+
+export const getPrograms = () => {
+    return apiFetch('/programs');
+};
+
+export const getProgramById = (programId) => {
+    return apiFetch(`/programs/${programId}`);
+};
