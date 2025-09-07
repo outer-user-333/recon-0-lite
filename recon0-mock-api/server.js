@@ -5,6 +5,49 @@ import cors from "cors";
 import multer from "multer";
 import path from "path";
 
+
+
+
+
+// --- AI HELPER FUNCTION ---
+const callLocalLLM = async (prompt) => {
+    const LLM_API_URL = 'http://localhost:1234/v1/chat/completions';
+
+    try {
+        const response = await fetch(LLM_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'local-model', // This can be anything when using LM Studio
+                messages: [
+                    { role: 'system', content: 'You are an expert cybersecurity analyst. Your task is to enhance vulnerability reports to be clear, professional, and precise.' },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`LM Studio server responded with status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+
+    } catch (error) {
+        console.error('Error calling local LLM:', error);
+        // Return a fallback error message if the LLM server is down
+        return 'Error: AI service is currently unavailable.';
+    }
+};
+
+
+
+
+
+
+
+
 const app = express();
 const PORT = 3001;
 app.use(cors());
@@ -936,6 +979,8 @@ app.post(
     }
 );
 
+
+
 // Get notifications for the currently logged-in user
 app.get("/api/v1/notifications", authenticateToken, (req, res) => {
     const loggedInUserId = req.user.id;
@@ -967,7 +1012,35 @@ app.get("/api/v1/achievements/my", authenticateToken, (req, res) => {
 });
 
 
+// --- AI ENDPOINTS (FUNCTIONAL) ---
+app.post('/api/v1/ai/enhance-report', authenticateToken, async (req, res) => {
+    const { description, steps_to_reproduce, impact } = req.body;
 
+    try {
+        console.log('Sending request to local LLM for enhancement...');
+
+        // We make parallel calls to the LLM for each section to speed things up
+        const [enhancedDescription, enhancedSteps, enhancedImpact] = await Promise.all([
+            callLocalLLM(`Rewrite the following vulnerability description for a professional security report. Be clear and concise:\n\n"${description}"`),
+            callLocalLLM(`Rewrite the following steps-to-reproduce. Number them clearly and ensure they are easy for a developer to follow:\n\n"${steps_to_reproduce}"`),
+            callLocalLLM(`Rewrite the following impact assessment. Focus on the potential business and security risks:\n\n"${impact}"`)
+        ]);
+
+        console.log('Successfully received enhancement from LLM.');
+
+        res.json({
+            success: true,
+            data: {
+                description: enhancedDescription,
+                steps_to_reproduce: enhancedSteps,
+                impact: enhancedImpact,
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to process AI enhancement.' });
+    }
+});
 
 
 

@@ -289,3 +289,15 @@ export const updateUserStatus = (userId, status) => {
         body: JSON.stringify({ status }),
     });
 };
+
+
+
+// --- AI FUNCTIONS ---
+
+export const enhanceReportWithAI = (reportText) => {
+    // reportText is { description, steps_to_reproduce, impact }
+    return apiFetch('/ai/enhance-report', {
+        method: 'POST',
+        body: JSON.stringify(reportText),
+    });
+};
