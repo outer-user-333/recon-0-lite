@@ -19,7 +19,7 @@ CREATE TABLE profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
-    role TEXT NOT NULL CHECK (role IN ('hacker', 'organization')),
+    role TEXT NOT NULL CHECK (role IN ('hacker', 'organization', 'admin')),
     bio TEXT,
     reputation_points INT DEFAULT 0,
     -- NOTE: avatar_url is planned for future file uploads
