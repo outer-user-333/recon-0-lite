@@ -251,3 +251,18 @@ export const uploadAttachment = (formData) => {
 export const getReportAttachments = (reportId) => {
     return apiFetch(`/reports/${reportId}/attachments`);
 };
+
+
+// --- REPORT MESSAGING FUNCTIONS ---
+
+export const getReportMessages = (reportId) => {
+    return apiFetch(`/reports/${reportId}/messages`);
+};
+
+export const sendReportMessage = (reportId, messageData) => {
+    // messageData is { content, attachments }
+    return apiFetch(`/reports/${reportId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(messageData),
+    });
+};

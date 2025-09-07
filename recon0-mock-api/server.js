@@ -98,6 +98,10 @@ let userAchievements = {
 
 let mockAttachments = [];
 
+
+let mockReportMessages = [];
+let mockMessageAttachments = [];
+
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -311,14 +315,19 @@ app.get('/api/v1/my-reports', authenticateToken, (req, res) => {
     res.json({ success: true, data: userReports });
 });
 
-// Get a single report by its ID
+// Get a single report by its ID, now including its attachments
 app.get('/api/v1/reports/:id', authenticateToken, (req, res) => {
     const report = mockReports.find(r => r.id === req.params.id);
     if (!report) {
         return res.status(404).json({ success: false, message: 'Report not found.' });
     }
+
+    // Find all attachments associated with this report
+    const attachments = mockAttachments.filter(att => att.report_id === report.id);
+    const reportWithAttachments = { ...report, attachments };
+
     console.log(`Fetched report: ${report.title}`);
-    res.json({ success: true, data: report });
+    res.json({ success: true, data: reportWithAttachments });
 });
 
 // Generic file upload endpoint for report attachments
@@ -348,6 +357,59 @@ app.get('/api/v1/reports/:reportId/attachments', authenticateToken, (req, res) =
 
     console.log(`Fetched ${reportAttachments.length} attachments for report ID: ${reportId}`);
     res.json({ success: true, data: reportAttachments });
+});
+
+
+
+// --- REPORT MESSAGING ENDPOINTS ---
+
+// Get all messages for a specific report
+app.get('/api/v1/reports/:reportId/messages', authenticateToken, (req, res) => {
+    const { reportId } = req.params;
+    const messages = mockReportMessages.filter(m => m.report_id === reportId).map(message => {
+        // For each message, find its attachments
+        const attachments = mockMessageAttachments.filter(att => att.message_id === message.id);
+        return { ...message, attachments };
+    });
+
+    console.log(`Fetched ${messages.length} messages for report ID: ${reportId}`);
+    res.json({ success: true, data: messages });
+});
+
+// Send a new message/reply from an organization
+app.post('/api/v1/reports/:reportId/messages', authenticateToken, (req, res) => {
+    if (req.user.role !== 'organization') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Only organizations can send replies.' });
+    }
+
+    const { reportId } = req.params;
+    const { content, attachments } = req.body;
+    const senderId = req.user.id;
+
+    const newMessageId = `msg-${Date.now()}`;
+    const newMessage = {
+        id: newMessageId,
+        report_id: reportId,
+        sender_id: senderId,
+        content,
+        created_at: new Date().toISOString()
+    };
+    mockReportMessages.push(newMessage);
+
+    if (attachments && attachments.length > 0) {
+        attachments.forEach(att => {
+            mockMessageAttachments.push({
+                id: `msg-attach-${Date.now()}-${Math.random()}`,
+                message_id: newMessageId,
+                file_url: att.url,
+                file_name: att.name,
+                file_type: att.type,
+            });
+        });
+    }
+
+    console.log('New report message sent:', newMessage);
+    res.status(201).json({ success: true, data: newMessage });
 });
 
 // Get leaderboard data

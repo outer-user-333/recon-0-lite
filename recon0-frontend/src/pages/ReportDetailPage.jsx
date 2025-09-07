@@ -1,53 +1,150 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   getReportById,
   getProfile,
   updateReportStatus,
-  getReportAttachments
+  getReportMessages,
+  sendReportMessage,
+  uploadAttachment,
 } from "../lib/apiService";
+
+// A new component for the reply form
+const ReplyForm = ({ reportId, onMessageSent }) => {
+  const [content, setContent] = useState("");
+  const [files, setFiles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
+    try {
+      // Step 1: Upload attachments
+      const uploadedAttachments = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const result = await uploadAttachment(formData);
+        if (result.success) {
+          uploadedAttachments.push({
+            url: result.url,
+            name: result.name,
+            type: result.type,
+          });
+        }
+      }
+
+      // Step 2: Send the message content with attachment URLs
+      const messageData = { content, attachments: uploadedAttachments };
+      await sendReportMessage(reportId, messageData);
+
+      // Clear form and notify parent component
+      setContent("");
+      setFiles([]);
+      onMessageSent();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="card mt-4">
+      <div className="card-header">
+        <h5>Send Reply</h5>
+      </div>
+      <div className="card-body">
+        {error && <div className="alert alert-danger">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <textarea
+              className="form-control"
+              rows="5"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write your formal reply..."
+              required
+            ></textarea>
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Attach Files</label>
+            <input
+              type="file"
+              className="form-control"
+              multiple
+              onChange={(e) => setFiles([...e.target.files])}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Sending..." : "Send Reply"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const ReportDetailPage = () => {
   const { reportId } = useParams();
   const [report, setReport] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [selectedStatus, setSelectedStatus] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [attachments, setAttachments] = useState([]);
+
+  const fetchData = async () => {
+    if (!reportId) return;
+    // Reset loading state for refetches
+    setLoading(true);
+    try {
+      const [reportResult, profileResult, messagesResult] = await Promise.all([
+        getReportById(reportId),
+        getProfile(),
+        getReportMessages(reportId),
+      ]);
+
+      if (reportResult.success) setReport(reportResult.data);
+      if (profileResult.success) setUserProfile(profileResult.data);
+      if (messagesResult.success) setMessages(messagesResult.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       if (!reportId) return;
+      // Reset loading state for refetches
+      setLoading(true);
       try {
-        // Fetch report, profile, and attachments all at once
-        const [reportResult, profileResult, attachmentsResult] =
-          await Promise.all([
-            getReportById(reportId),
-            getProfile(),
-            getReportAttachments(reportId),
-          ]);
+        const [reportResult, profileResult, messagesResult] = await Promise.all(
+          [getReportById(reportId), getProfile(), getReportMessages(reportId)]
+        );
 
-        if (reportResult.success) {
-          setReport(reportResult.data);
-          setSelectedStatus(reportResult.data.status);
-        }
-        if (profileResult.success) {
-          setUserProfile(profileResult.data);
-        }
-        if (attachmentsResult.success) {
-          setAttachments(attachmentsResult.data);
-        }
+        if (reportResult.success) setReport(reportResult.data);
+        if (profileResult.success) setUserProfile(profileResult.data);
+        if (messagesResult.success) setMessages(messagesResult.data);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
-  }, [reportId]);
+  }, [reportId]); // The only dependency is reportId, which is correct.
 
   const handleStatusUpdate = async () => {
     setIsUpdating(true);
@@ -55,7 +152,7 @@ const ReportDetailPage = () => {
     try {
       const result = await updateReportStatus(report.id, selectedStatus);
       if (result.success) {
-        setReport(result.data);
+        setReport(result.data); // Update UI with the new report data
       }
     } catch (err) {
       setError(err.message);
@@ -65,21 +162,15 @@ const ReportDetailPage = () => {
   };
 
   const canTriage = userProfile?.role === "organization";
-
-  const getSeverityClass = (severity) => {
-    const lowerSeverity = severity?.toLowerCase();
-    if (lowerSeverity === "critical") return "text-danger";
-    if (lowerSeverity === "high") return "text-warning";
-    return "text-primary";
-  };
-
-  const getStatusBadge = (status) => {
-    const lowerStatus = status?.toLowerCase();
-    if (lowerStatus === "accepted") return "bg-success";
-    if (lowerStatus === "triaging") return "bg-warning text-dark";
-    if (lowerStatus === "new") return "bg-primary";
-    return "bg-secondary";
-  };
+  const getSeverityClass = (s) =>
+    ({ critical: "text-danger", high: "text-warning" }[s?.toLowerCase()] ||
+    "text-primary");
+  const getStatusBadge = (s) =>
+    ({
+      accepted: "bg-success",
+      triaging: "bg-warning text-dark",
+      new: "bg-primary",
+    }[s?.toLowerCase()] || "bg-secondary");
 
   if (loading) return <div>Loading report details...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
@@ -136,6 +227,7 @@ const ReportDetailPage = () => {
         </div>
       )}
 
+      {/* === ORIGINAL REPORT DETAILS & ATTACHMENTS === */}
       <div className="card mt-4 shadow-sm">
         <div className="card-header">
           <h5>Vulnerability Description</h5>
@@ -152,20 +244,29 @@ const ReportDetailPage = () => {
           <p style={{ whiteSpace: "pre-wrap" }}>{report.steps_to_reproduce}</p>
         </div>
       </div>
-      {/* === NEW ATTACHMENTS SECTION === */}
       <div className="card mt-4 shadow-sm">
         <div className="card-header">
-          <h5>Attachments</h5>
+          <h5>Impact</h5>
         </div>
         <div className="card-body">
-          {attachments.length > 0 ? (
+          <p style={{ whiteSpace: "pre-wrap" }}>{report.impact}</p>
+        </div>
+      </div>
+
+      {/* This section will show the attachments submitted by the HACKER */}
+      <div className="card mt-4 shadow-sm">
+        <div className="card-header">
+          <h5>Original Attachments</h5>
+        </div>
+        <div className="card-body">
+          {/* Note: This assumes attachments are fetched with the report. We will add this logic. */}
+          {report.attachments && report.attachments.length > 0 ? (
             <ul className="list-group">
-              {attachments.map((att) => (
+              {report.attachments.map((att) => (
                 <li
                   key={att.id}
                   className="list-group-item d-flex justify-content-between align-items-center"
                 >
-                  {/* Display a small image preview if it's an image */}
                   {att.file_type.startsWith("image/") && (
                     <img
                       src={att.file_url}
@@ -197,6 +298,71 @@ const ReportDetailPage = () => {
           )}
         </div>
       </div>
+
+      {/* === NEW MESSAGING/REPLY SECTION === */}
+      <div className="mt-4">
+        <h4 className="mb-3">Communication Log</h4>
+        {messages.length > 0 ? (
+          messages.map((message) => (
+            <div key={message.id} className="card mb-3">
+              <div className="card-header d-flex justify-content-between">
+                <strong>Reply from Organization</strong>
+                <small className="text-muted">
+                  {new Date(message.created_at).toLocaleString()}
+                </small>
+              </div>
+              <div className="card-body">
+                <p style={{ whiteSpace: "pre-wrap" }}>{message.content}</p>
+                {message.attachments && message.attachments.length > 0 && (
+                  <div>
+                    <hr />
+                    <strong>Attachments:</strong>
+                    <ul className="list-unstyled mt-2">
+                      {message.attachments.map((att) => (
+                        <li key={att.id}>
+                          <a
+                            href={att.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <i className="fas fa-paperclip me-2"></i>
+                            {att.file_name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-muted">
+            No replies have been sent for this report yet.
+          </p>
+        )}
+      </div>
+
+      {/* The Reply Form is only visible to the organization */}
+      {canTriage && (
+        <ReplyForm reportId={report.id} onMessageSent={fetchData} />
+      )}
+
+      {/* --- NEW: "Submit New Report" button for the hacker who owns the report --- */}
+      {userProfile?.id === report.reporter_id && (
+        <div className="text-center mt-4">
+          <Link
+            to={`/programs/${report.program_id}/submit`}
+            className="btn btn-outline-primary"
+          >
+            <i className="fas fa-plus me-2"></i>Submit a new, related report
+          </Link>
+        </div>
+      )}
+
+      {/* {canTriage && (
+        <ReplyForm reportId={report.id} onMessageSent={fetchData} />
+      )} */}
     </div>
   );
 };
