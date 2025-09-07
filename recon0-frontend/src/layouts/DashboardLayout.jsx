@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { getProfile, logout, getToken } from "../lib/apiService";
-import { loginChatUser } from '../lib/chatAuthService';
+import { loginChatUser } from "../lib/chatAuthService";
+import ChatbotWidget from "../components/ChatbotWidget";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const checkAuthAndFetchProfile = async () => {
-       loginChatUser(); // <-- ADD THIS LINE
+      loginChatUser(); // <-- ADD THIS LINE
       const token = getToken();
       if (!token) {
         // If no token, redirect to login page
@@ -178,6 +179,9 @@ const DashboardLayout = () => {
       <main className="flex-grow-1 p-4">
         <Outlet context={{ userProfile }} /> {/* Pass profile down */}
       </main>
+
+      {/* ADD THE CHATBOT WIDGET HERE */}
+      <ChatbotWidget />
     </div>
   );
 };

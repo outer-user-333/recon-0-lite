@@ -1042,6 +1042,34 @@ app.post('/api/v1/ai/enhance-report', authenticateToken, async (req, res) => {
     }
 });
 
+// Handle a conversation turn for the general Q&A chatbot
+app.post('/api/v1/ai/chat', authenticateToken, async (req, res) => {
+    const { question } = req.body;
+    if (!question) {
+        return res.status(400).json({ success: false, message: 'Question is required.' });
+    }
+
+    try {
+        console.log(`Sending question to LLM: "${question}"`);
+
+        // We use a different system prompt for the chatbot to give it a personality
+        const prompt = `You are a helpful assistant for the Recon-0 bug bounty platform. Answer the user's question clearly and concisely.\n\nUser's Question: "${question}"`;
+
+        const answer = await callLocalLLM(prompt);
+
+        console.log(`Received answer from LLM: "${answer}"`);
+
+        res.json({
+            success: true,
+            data: {
+                answer: answer
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to get a response from the AI assistant.' });
+    }
+});
 
 
 // --- ADMIN ENDPOINTS ---

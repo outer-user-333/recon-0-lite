@@ -301,3 +301,11 @@ export const enhanceReportWithAI = (reportText) => {
         body: JSON.stringify(reportText),
     });
 };
+
+
+export const askChatbot = (question) => {
+    return apiFetch('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ question }),
+    });
+};
