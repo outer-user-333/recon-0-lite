@@ -103,15 +103,26 @@ CREATE TABLE report_attachments (
 );
 COMMENT ON TABLE public.report_attachments IS 'Stores URLs to files (e.g., screenshots, videos) attached to a vulnerability report.';
 
--- Stores comments on a specific report for communication.
-CREATE TABLE report_comments (
+-- Stores formal messages/replies sent from an organization to a hacker regarding a report.
+CREATE TABLE report_messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
-    author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, -- The org user who sent it
     content TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-COMMENT ON TABLE public.report_comments IS 'A thread of comments for a specific report.';
+COMMENT ON TABLE public.report_messages IS 'Stores formal replies from organizations to hackers about a specific report.';
+
+-- Stores links to attachments for a specific report message.
+CREATE TABLE message_attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    message_id UUID NOT NULL REFERENCES report_messages(id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name TEXT,
+    file_type TEXT,
+    uploaded_at TIMESTAMPTZ DEFAULT NOW()
+);
+COMMENT ON TABLE public.message_attachments IS 'Stores URLs to files attached to a report message.';
 
 
 -- Defines all possible achievements in the gamification system.
