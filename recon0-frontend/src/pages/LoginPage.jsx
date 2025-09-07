@@ -9,22 +9,27 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            const result = await login({ email, password });
-            if (result.success) {
-                navigate('/dashboard'); // Redirect to dashboard on successful login
+    try {
+        const result = await login({ email, password });
+        if (result.success && result.user) {
+            // --- NEW: Role-based redirect ---
+            if (result.user.role === 'admin') {
+                navigate('/admin/users'); // Admins go to user management
+            } else {
+                navigate('/dashboard'); // Hackers and Orgs go to the main dashboard
             }
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
         }
-    };
+    } catch (err) {
+        setError(err.message);
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="d-flex align-items-center justify-content-center vh-100">

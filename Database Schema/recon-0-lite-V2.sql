@@ -20,6 +20,7 @@ CREATE TABLE profiles (
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
     role TEXT NOT NULL CHECK (role IN ('hacker', 'organization', 'admin')),
+    status TEXT NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Suspended')),
     bio TEXT,
     reputation_points INT DEFAULT 0,
     -- NOTE: avatar_url is planned for future file uploads

@@ -173,6 +173,11 @@ export const getOrgReports = () => {
     return apiFetch('/organization/reports');
 };
 
+
+export const getOrgDashboard = () => {
+    return apiFetch('/organization/dashboard');
+};
+
 // --- TRIAGE FUNCTIONS ---
 
 export const updateReportStatus = (reportId, status) => {
@@ -264,5 +269,23 @@ export const sendReportMessage = (reportId, messageData) => {
     return apiFetch(`/reports/${reportId}/messages`, {
         method: 'POST',
         body: JSON.stringify(messageData),
+    });
+};
+
+
+// --- ADMIN FUNCTIONS ---
+
+export const getAllUsers = () => {
+    return apiFetch('/admin/users');
+};
+
+export const getPlatformAnalytics = () => {
+    return apiFetch('/admin/analytics');
+};
+
+export const updateUserStatus = (userId, status) => {
+    return apiFetch(`/admin/users/${userId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
     });
 };
