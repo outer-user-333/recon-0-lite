@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfile, getStats, getOrgDashboard } from '../lib/apiService.js';
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
   ArcElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
@@ -23,6 +25,8 @@ ChartJS.register(
   LinearScale,
   BarElement,
   ArcElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -122,10 +126,41 @@ const DashboardPage = () => {
     };
     const barChartOptions = { responsive: true, plugins: { legend: { display: false } } };
 
+    // New: Monthly trends data for organizations
+    const monthlyTrendsData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Reports Submitted',
+            data: [12, 19, 25, 22, 28, 35],
+            borderColor: '#3B82F6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true,
+        }, {
+            label: 'Reports Resolved',
+            data: [8, 15, 18, 20, 24, 30],
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true,
+        }]
+    };
+    const lineChartOptions = { responsive: true, plugins: { legend: { position: 'top' } } };
+
     const topReporters = [
-        { name: 'CryptoHunter', reports: 12, avatar: 'https://placehold.co/32x32/8B5CF6/FFFFFF?text=C' },
-        { name: 'ZeroDayZee', reports: 9, avatar: 'https://placehold.co/32x32/10B981/FFFFFF?text=Z' },
-        { name: 'BugByte', reports: 7, avatar: 'https://placehold.co/32x32/3B82F6/FFFFFF?text=B' },
+        { name: 'CryptoHunter', reports: 24, earnings: '$15,420', severity: 'Critical', avatar: 'https://placehold.co/40x40/8B5CF6/FFFFFF?text=C', badge: '🏆' },
+        { name: 'ZeroDayZee', reports: 18, earnings: '$12,300', severity: 'High', avatar: 'https://placehold.co/40x40/10B981/FFFFFF?text=Z', badge: '🥈' },
+        { name: 'BugByte', reports: 15, earnings: '$8,950', severity: 'High', avatar: 'https://placehold.co/40x40/3B82F6/FFFFFF?text=B', badge: '🥉' },
+        { name: 'SecureShell', reports: 12, earnings: '$7,200', severity: 'Medium', avatar: 'https://placehold.co/40x40/F97316/FFFFFF?text=S', badge: '⭐' },
+        { name: 'ByteHunter', reports: 9, earnings: '$5,800', severity: 'Medium', avatar: 'https://placehold.co/40x40/F43F5E/FFFFFF?text=B', badge: '⭐' },
+    ];
+
+    // Program performance data
+    const programPerformance = [
+        { name: 'Web Application Security', reports: 45, bounty: '$28,500', status: 'Active' },
+        { name: 'Mobile App Testing', reports: 32, bounty: '$19,200', status: 'Active' },
+        { name: 'API Security Review', reports: 28, bounty: '$15,600', status: 'Paused' },
+        { name: 'Infrastructure Audit', reports: 21, bounty: '$12,800', status: 'Active' },
     ];
 
     // --- RENDER LOGIC ---
@@ -164,53 +199,97 @@ const DashboardPage = () => {
                 </div>
             )}
             
-            {/* ORGANIZATION DASHBOARD */}
+            {/* ORGANIZATION DASHBOARD - IMPROVED LAYOUT */}
             {isOrganization && dashboardData && (
                 <div className="space-y-6">
+                    {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                         <StatCard title="Active Programs" value={dashboardData.kpis.programCount} icon={<Briefcase size={24} />} colorClass="bg-sky-100 text-sky-600" />
                         <StatCard title="Total Reports" value={dashboardData.kpis.totalReports} icon={<BarChart3 size={24} />} colorClass="bg-slate-100 text-slate-600" />
                         <StatCard title="New Reports" value={dashboardData.kpis.newReports} icon={<FileText size={24} />} colorClass="bg-orange-100 text-orange-600" />
                         <StatCard title="Avg. Time to Bounty" value="14.2 Days" note="Dummy Data" icon={<Clock size={24} />} colorClass="bg-violet-100 text-violet-600" />
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div className="lg:col-span-3">
-                             <DashboardCard title="Recent Reports" viewAllLink="/manage-reports">
-                                <div className="space-y-2">
-                                    {dashboardData.recentReports.length > 0 ? (
-                                        dashboardData.recentReports.map(report => (
-                                            <Link to={`/reports/${report.id}`} key={report.id} className="block p-4 rounded-lg hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
-                                                <div className="flex justify-between items-start">
-                                                    <h4 className="font-semibold text-slate-700">{report.title}</h4>
-                                                    <span className="text-xs text-slate-400 whitespace-nowrap">{new Date(report.created_at).toLocaleDateString()}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-500 mt-1">For program: {report.program_name}</p>
-                                            </Link>
-                                        ))
-                                    ) : (
-                                        <p className="p-4 text-sm text-slate-500 text-center">No reports have been submitted yet.</p>
-                                    )}
-                                </div>
-                            </DashboardCard>
-                        </div>
-                       <div className="lg:col-span-2 space-y-6">
-                            <DashboardCard title="Severity Distribution">
-                                <Bar options={barChartOptions} data={orgChartData} />
-                            </DashboardCard>
-                            <DashboardCard title="Top Reporters">
-                                <ul className="space-y-3">
-                                    {topReporters.map(reporter => (
-                                        <li key={reporter.name} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <img src={reporter.avatar} alt={reporter.name} className="w-8 h-8 rounded-full" />
-                                                <span className="font-medium text-slate-700">{reporter.name}</span>
+
+                    {/* First Row: Recent Reports and Monthly Trends */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <DashboardCard title="Recent Reports" viewAllLink="/manage-reports">
+                            <div className="space-y-2 max-h-80 overflow-y-auto">
+                                {dashboardData.recentReports.length > 0 ? (
+                                    dashboardData.recentReports.map(report => (
+                                        <Link to={`/reports/${report.id}`} key={report.id} className="block p-4 rounded-lg hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-semibold text-slate-700">{report.title}</h4>
+                                                <span className="text-xs text-slate-400 whitespace-nowrap">{new Date(report.created_at).toLocaleDateString()}</span>
                                             </div>
-                                            <span className="font-bold text-slate-500">{reporter.reports} reports</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </DashboardCard>
-                       </div>
+                                            <p className="text-sm text-slate-500 mt-1">For program: {report.program_name}</p>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <p className="p-4 text-sm text-slate-500 text-center">No reports have been submitted yet.</p>
+                                )}
+                            </div>
+                        </DashboardCard>
+
+                        <DashboardCard title="Monthly Trends">
+                            <div className="h-80">
+                                <Line data={monthlyTrendsData} options={lineChartOptions} />
+                            </div>
+                        </DashboardCard>
+                    </div>
+
+                    {/* Second Row: Three Equal Columns */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <DashboardCard title="Severity Distribution">
+                            <div className="h-64">
+                                <Bar options={barChartOptions} data={orgChartData} />
+                            </div>
+                        </DashboardCard>
+
+                        <DashboardCard title="Top Reporters" viewAllLink="/researchers">
+                            <div className="space-y-4">
+                                {topReporters.map((reporter, index) => (
+                                    <div key={reporter.name} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <img src={reporter.avatar} alt={reporter.name} className="w-10 h-10 rounded-full border-2 border-slate-200" />
+                                                <span className="absolute -top-1 -right-1 text-xs">{reporter.badge}</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-700 text-sm">{reporter.name}</p>
+                                                <p className="text-xs text-slate-500">{reporter.earnings} earned</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-slate-600 text-sm">{reporter.reports}</p>
+                                            <p className="text-xs text-slate-400">reports</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </DashboardCard>
+
+                        <DashboardCard title="Program Performance" viewAllLink="/my-programs">
+                            <div className="space-y-3">
+                                {programPerformance.map((program, index) => (
+                                    <div key={program.name} className="p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h4 className="font-medium text-slate-700 text-sm leading-tight">{program.name}</h4>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                program.status === 'Active' 
+                                                    ? 'bg-emerald-100 text-emerald-700' 
+                                                    : 'bg-orange-100 text-orange-700'
+                                            }`}>
+                                                {program.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-xs text-slate-500">
+                                            <span>{program.reports} reports</span>
+                                            <span className="font-medium text-slate-700">{program.bounty}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </DashboardCard>
                     </div>
                 </div>
             )}
@@ -219,5 +298,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-
-

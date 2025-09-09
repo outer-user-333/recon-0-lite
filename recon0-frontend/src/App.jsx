@@ -11,7 +11,7 @@ function Logo() {
   );
 }
 
-// Header Component Refactored with Tailwind CSS
+// Header Component
 function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
@@ -36,15 +36,37 @@ function Header() {
   );
 }
 
-const FeatureCard = ({ icon, title, children }) => (
-    <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-        <div className="mb-4 inline-block p-3 rounded-full bg-gradient-to-r from-blue-100 to-violet-100">
-            {icon}
+const FeatureCard = ({ icon, title, children, variant }) => {
+    // IMPROVEMENT: Using more vibrant gradient colors for the cards.
+    const variants = {
+        blue: {
+            card: 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-700',
+            iconContainer: 'bg-white/20',
+            iconColor: 'text-white',
+            titleColor: 'text-white',
+            textColor: 'text-blue-100'
+        },
+        violet: {
+            card: 'bg-gradient-to-br from-violet-500 to-violet-600 border-violet-700',
+            iconContainer: 'bg-white/20',
+            iconColor: 'text-white',
+            titleColor: 'text-white',
+            textColor: 'text-violet-100'
+        }
+    };
+    const style = variants[variant] || variants.blue;
+
+    return (
+        <div className={`p-6 rounded-2xl shadow-md border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${style.card}`}>
+            <div className={`mb-4 inline-block p-3 rounded-full ${style.iconContainer}`}>
+                {/* Clone the icon element to apply the correct color class */}
+                {React.cloneElement(icon, { className: `w-7 h-7 ${style.iconColor}` })}
+            </div>
+            <h3 className={`text-xl font-bold mb-2 ${style.titleColor}`}>{title}</h3>
+            <p className={`${style.textColor}`}>{children}</p>
         </div>
-        <h3 className="text-xl font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-slate-500">{children}</p>
-    </div>
-);
+    );
+};
 
 const HowItWorksStep = ({ number, title, children }) => (
     <div className="flex items-start gap-4">
@@ -58,20 +80,22 @@ const HowItWorksStep = ({ number, title, children }) => (
     </div>
 );
 
-// Main Landing Page Component Refactored with Tailwind CSS
+// Main Landing Page Component
 function App() {
   return (
-    <div className="bg-slate-200">
+    <div className="bg-slate-100">
       <Header />
       <main>
         {/* Hero Section */}
-        <section 
-          className="min-h-screen flex items-center justify-center text-center pt-24 pb-12 px-4"
-          style={{
-            backgroundImage: 'radial-gradient(circle at top, #FFFFFF, #E2E8F0)'
-          }}
-        >
-          <div className="max-w-4xl">
+        <section className="relative min-h-screen flex items-center justify-center text-center pt-24 pb-12 px-4 overflow-hidden">
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-0 left-0 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div className="absolute top-0 right-0 w-72 h-72 bg-violet-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-20 left-1/4 w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+                <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                 <div className="absolute inset-0 bg-white/30 backdrop-blur-lg"></div>
+            </div>
+          <div className="max-w-4xl relative z-10">
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-4 leading-tight">
               Next-Gen Bug Bounty Platform
             </h1>
@@ -102,23 +126,24 @@ function App() {
                     <h2 className="text-4xl font-bold text-slate-800">Why Choose Recon_0?</h2>
                     <p className="text-slate-500 mt-2 max-w-2xl mx-auto">A comprehensive platform built for effective and collaborative security testing.</p>
                 </div>
+                {/* IMPROVEMENT: Added 'variant' prop to color the cards */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <FeatureCard icon={<Target size={28} className="text-blue-600" /> } title="Targeted Programs">
+                    <FeatureCard icon={<Target />} title="Targeted Programs" variant="blue">
                         Organizations can create detailed bug bounty programs with specific scopes and rewards to attract the right talent.
                     </FeatureCard>
-                    <FeatureCard icon={<Zap size={28} className="text-violet-600" />} title="Efficient Reporting">
+                    <FeatureCard icon={<Zap />} title="Efficient Reporting" variant="violet">
                         Hackers get a streamlined report submission process, including an AI-powered assistant to enhance report quality.
                     </FeatureCard>
-                    <FeatureCard icon={<Users size={28} className="text-blue-600" />} title="Community Leaderboard">
+                    <FeatureCard icon={<Users />} title="Community Leaderboard" variant="blue">
                         Compete with other hackers, earn points for valid reports, and climb the ranks to become a top security researcher.
                     </FeatureCard>
-                    <FeatureCard icon={<BarChart size={28} className="text-violet-600" />} title="Actionable Analytics">
+                    <FeatureCard icon={<BarChart />} title="Actionable Analytics" variant="violet">
                         Organizations receive detailed analytics on submitted reports, helping them track vulnerabilities and response times.
                     </FeatureCard>
-                     <FeatureCard icon={<MessageSquare size={28} className="text-blue-600" />} title="Secure Communication">
+                     <FeatureCard icon={<MessageSquare />} title="Secure Communication" variant="blue">
                         A dedicated real-time chat ensures direct and secure communication between organizations and hackers.
                     </FeatureCard>
-                     <FeatureCard icon={<Award size={28} className="text-violet-600" />} title="Achievements & Gamification">
+                     <FeatureCard icon={<Award />} title="Achievements & Gamification" variant="violet">
                         Unlock achievements and gain experience points for your contributions, making security research more engaging.
                     </FeatureCard>
                 </div>
@@ -126,7 +151,7 @@ function App() {
         </section>
 
          {/* How It Works Section */}
-        <section className="py-20 bg-slate-200">
+        <section className="py-20 bg-slate-100">
              <div className="container mx-auto px-6">
                  <div className="text-center mb-12">
                     <h2 className="text-4xl font-bold text-slate-800">Simple, Transparent Process</h2>

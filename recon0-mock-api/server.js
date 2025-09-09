@@ -557,17 +557,32 @@ app.get(
 
 // --- REPORT MESSAGING ENDPOINTS ---
 
+
+// --- REPORT MESSAGING ENDPOINTS ---
+
 // Get all messages for a specific report
 app.get("/api/v1/reports/:reportId/messages", authenticateToken, (req, res) => {
     const { reportId } = req.params;
     const messages = mockReportMessages
         .filter((m) => m.report_id === reportId)
         .map((message) => {
+            // *** FIX STARTS HERE ***
+            // Find the sender's profile to enrich the message data
+            const sender = mockUsers.find(u => u.id === message.sender_id);
+
             // For each message, find its attachments
             const attachments = mockMessageAttachments.filter(
                 (att) => att.message_id === message.id
             );
-            return { ...message, attachments };
+
+            // Return the message combined with sender info and attachments
+            return { 
+                ...message, 
+                sender_username: sender ? sender.username : 'Unknown User',
+                sender_avatar_url: sender ? sender.avatar_url : null,
+                attachments 
+            };
+            // *** FIX ENDS HERE ***
         });
 
     console.log(`Fetched ${messages.length} messages for report ID: ${reportId}`);

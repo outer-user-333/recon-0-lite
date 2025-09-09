@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '/src/lib/apiService.js'; // Corrected import path
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Mail, Lock } from 'lucide-react';
 
 // A simple, reusable Logo component for consistency
 function Logo() {
   return (
     <div className="text-center mb-6">
-      <Link to="/" className="text-3xl font-bold text-slate-800 tracking-wider">
+      <Link to="/" className="text-4xl font-bold text-slate-900 tracking-wider">
         RECON<span className="text-blue-500">_0</span>
       </Link>
     </div>
@@ -43,49 +43,74 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-200 flex flex-col justify-center items-center p-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+        // Enhanced background with colorful gradient effects and floating shapes
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-violet-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
+            {/* Distinct colorful floating shapes - ensuring high contrast */}
+            <div className="absolute top-16 left-16 w-40 h-40 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full opacity-70 animate-pulse"></div>
+            <div className="absolute top-24 right-24 w-32 h-32 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl rotate-45 opacity-80 animate-bounce"></div>
+            <div className="absolute bottom-24 left-24 w-48 h-48 bg-gradient-to-br from-rose-400 to-rose-600 rounded-full opacity-60"></div>
+            <div className="absolute bottom-16 right-16 w-36 h-36 bg-gradient-to-br from-violet-400 to-violet-600 rounded-xl rotate-12 opacity-70"></div>
+            <div className="absolute top-1/2 left-8 w-24 h-24 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full opacity-50 animate-ping"></div>
+            <div className="absolute top-1/3 right-8 w-28 h-28 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl rotate-45 opacity-60"></div>
+            
+            {/* Enhanced form card with more pronounced styling */}
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-8 relative z-10 backdrop-blur-sm">
                 <Logo />
-                <h2 className="text-2xl font-bold text-center text-slate-800 mb-1">Welcome Back!</h2>
+                <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">Welcome Back!</h2>
                 <p className="text-center text-slate-500 mb-8">Log in to your account to continue.</p>
 
                 {error && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
+                    <div className="bg-rose-50 border-l-4 border-rose-500 text-rose-700 p-4 mb-6 rounded-lg shadow-sm" role="alert">
                         <p className="font-bold">Error</p>
                         <p>{error}</p>
                     </div>
                 )}
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Email field with icon and colorful styling */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address</label>
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)} // Corrected typo here
-                            required
-                            className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        />
+                        <label htmlFor="email" className="block text-sm font-medium text-slate-900 mb-2">Email Address</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Mail className="h-5 w-5 text-emerald-500" />
+                            </div>
+                            <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="block w-full pl-10 pr-4 py-3 bg-emerald-50 border-2 border-emerald-300 rounded-lg shadow-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                                placeholder="Enter your email"
+                            />
+                        </div>
                     </div>
 
+                    {/* Password field with icon and colorful styling */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        />
+                        <label htmlFor="password" className="block text-sm font-medium text-slate-900 mb-2">Password</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-violet-500" />
+                            </div>
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="block w-full pl-10 pr-4 py-3 bg-violet-50 border-2 border-violet-300 rounded-lg shadow-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
+                                placeholder="Enter your password"
+                            />
+                        </div>
                     </div>
 
+                    {/* Enhanced submit button */}
                     <div>
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-violet-500 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-opacity"
+                            className="w-full flex justify-center py-4 px-6 border border-transparent rounded-xl shadow-xl text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {loading ? <LoaderCircle className="animate-spin" /> : 'Log In'}
                         </button>
@@ -94,7 +119,7 @@ const LoginPage = () => {
 
                 <p className="mt-8 text-center text-sm text-slate-500">
                     Don't have an account?{' '}
-                    <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">
+                    <Link to="/signup" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
                         Sign Up
                     </Link>
                 </p>
@@ -104,4 +129,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

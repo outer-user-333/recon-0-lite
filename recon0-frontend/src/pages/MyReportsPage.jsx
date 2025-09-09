@@ -99,7 +99,7 @@ const MyReportsPage = () => {
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-1/3">Title</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Program</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Severity</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
@@ -110,8 +110,8 @@ const MyReportsPage = () => {
                         <tbody className="bg-white divide-y divide-slate-200">
                             {reports.map(report => (
                                 <tr key={report.id} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <Link to={`/reports/${report.id}`} className="text-sm font-medium text-slate-800 group-hover:text-blue-600">{report.title}</Link>
+                                    <td className="px-6 py-4 w-1/3">
+                                        <Link to={`/reports/${report.id}`} className="text-sm font-medium text-slate-800 group-hover:text-blue-600 line-clamp-2">{report.title}</Link>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{report.program_name}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -139,4 +139,3 @@ const MyReportsPage = () => {
 };
 
 export default MyReportsPage;
-

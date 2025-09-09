@@ -5,7 +5,7 @@ import { loginChatUser } from '../lib/chatAuthService.js';
 import ChatbotWidget from '../components/ChatbotWidget.jsx';
 import { 
     LayoutDashboard, Target, FileText, BookOpen, Trophy, MessageSquare, 
-    PlusCircle, Briefcase, BarChart2, User, LogOut, Bell, ShieldCheck, Search
+    PlusCircle, Briefcase, BarChart2, LogOut, Bell, ShieldCheck, Search, Bot
 } from 'lucide-react';
 
 // Reusable NavLink component for the sidebar
@@ -29,8 +29,8 @@ const NavLink = ({ to, icon, children }) => {
 };
 
 // Sidebar Component
-const Sidebar = ({ userProfile, onLogout }) => {
-    if (!userProfile) return null; // Don't render sidebar if no profile
+const Sidebar = ({ userProfile, onLogout, onToggleChat }) => {
+    if (!userProfile) return null;
 
     const isHacker = userProfile.role === "hacker";
     const isOrganization = userProfile.role === "organization";
@@ -68,6 +68,14 @@ const Sidebar = ({ userProfile, onLogout }) => {
             </nav>
 
             <div className="mt-auto border-t border-slate-200 pt-4">
+                 {/* BUG FIX: Added the AI Assistant button here */}
+                 <button 
+                    onClick={onToggleChat} 
+                    className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 transition-opacity text-sm font-medium mb-2 shadow-md"
+                >
+                    <Bot size={20} />
+                    <span>AI Assistant</span>
+                </button>
                  <Link to="/profile" className="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 mb-2">
                      <img 
                         src={userProfile.avatar_url || `https://placehold.co/40x40/E2E8F0/475569?text=${userProfile.username.charAt(0).toUpperCase()}`}
@@ -116,6 +124,9 @@ const DashboardLayout = () => {
     const navigate = useNavigate();
     const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isChatOpen, setIsChatOpen] = useState(false); // BUG FIX: State is lifted here
+
+    const toggleChat = () => setIsChatOpen(!isChatOpen); // BUG FIX: Toggle function is lifted here
 
     useEffect(() => {
         const checkAuthAndFetchProfile = async () => {
@@ -160,18 +171,18 @@ const DashboardLayout = () => {
 
     return (
         <div className="min-h-screen bg-slate-200">
-            <Sidebar userProfile={userProfile} onLogout={handleLogout} />
+            <Sidebar userProfile={userProfile} onLogout={handleLogout} onToggleChat={toggleChat} />
             <div className="ml-64">
                 <Header userProfile={userProfile} />
                 <main className="p-8">
                     <Outlet context={{ userProfile }} /> 
                 </main>
             </div>
-            <ChatbotWidget />
+            {/* BUG FIX: Pass state and toggle function as props */}
+            <ChatbotWidget isOpen={isChatOpen} onClose={toggleChat} />
         </div>
     );
 };
 
 export default DashboardLayout;
-
 

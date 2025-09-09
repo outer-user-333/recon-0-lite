@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // Import all layouts
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
 import AdminLayout from "./layouts/AdminLayout.jsx";
+import ArticleLayout from "./layouts/ArticleLayout.jsx";
 
 // Import all pages
 import App from "./App.jsx";
@@ -68,6 +69,10 @@ const router = createBrowserRouter([
       { path: "leaderboard", element: <LeaderboardPage /> },
       { path: "notifications", element: <NotificationsPage /> },
       { path: "chat", element: <ChatPage /> },
+      {
+        path: "academy/:articleId",
+        element: <ArticleLayout />,
+      },
     ],
   },
   // --- ADMIN ROUTES ---
@@ -77,8 +82,12 @@ const router = createBrowserRouter([
     children: [
       { path: "users", element: <UserManagementPage /> },
       { path: "analytics", element: <PlatformAnalyticsPage /> },
-      { path: 'profile', element: <ProfilePage /> },
+      { path: "profile", element: <ProfilePage /> },
     ],
+  },
+  {
+    path: "academy/:articleId",
+    element: <ArticleLayout />,
   },
 ]);
 
