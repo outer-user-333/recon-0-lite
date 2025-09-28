@@ -54,8 +54,8 @@ public class ProfileService {
     public StatsDto getUserStats() {
         User user = getCurrentUser();
 
-        long reportsSubmitted = reportRepository.countByReporterId(user);
-        long reportsAccepted = reportRepository.countByReporterIdAndStatus(user, "Accepted");
+        long reportsSubmitted = reportRepository.countByReporter(user);
+        long reportsAccepted = reportRepository.countByReporterAndStatus(user, "Accepted");
         Integer bountiesEarned = reportRepository.sumBountiesForAcceptedReports(user.getId());
 
         return StatsDto.builder()

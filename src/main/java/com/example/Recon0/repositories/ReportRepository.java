@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ReportRepository extends JpaRepository<Report, UUID> {
-    long countByReporterId(User reporter);
-    long countByReporterIdAndStatus(User reporterId, String status);
+    long countByReporter(User reporter);
+    long countByReporterAndStatus(User reporterId, String status);
     List<Report> findByReporter(User reporter);
 
     /**

@@ -42,6 +42,12 @@ public class OrganizationService {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+    private Organization getCurrentUsersOrganization() {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // Assuming a user is linked to one primary organization
+        return organizationRepository.findByOwnerId(currentUser.getId())
+                .orElseThrow(() -> new IllegalStateException("The current user is not associated with any organization."));
+    }
 
     @Transactional(readOnly = true)
     public OrgDashboardDto getDashboard() {
@@ -76,6 +82,16 @@ public class OrganizationService {
 
         Program savedProgram = programRepository.save(program);
         return ProgramDto.fromProgram(savedProgram);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProgramDto> getMyPrograms() {
+        Organization organization = getCurrentUsersOrganization();
+        List<Program> programs = programRepository.findByOrganization(organization);
+
+        return programs.stream()
+                .map(ProgramDto::fromProgram) // Use the DTO conversion helper
+                .collect(Collectors.toList());
     }
 
     @Transactional

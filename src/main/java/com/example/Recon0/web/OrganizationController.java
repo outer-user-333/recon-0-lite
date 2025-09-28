@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -30,6 +31,15 @@ public class OrganizationController {
         OrgDashboardDto dashboardData = organizationService.getDashboard();
         return ResponseEntity.ok(ApiResponse.success(dashboardData));
     }
+    @GetMapping("/my-programs")
+    public ResponseEntity<ApiResponse<List<ProgramDto>>> getMyPrograms() {
+        List<ProgramDto> programs = organizationService.getMyPrograms();
+        ApiResponse<List<ProgramDto>> response = ApiResponse.<List<ProgramDto>>builder()
+                .success(true)
+                .data(programs)
+                .build();
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/my-programs")
     public ResponseEntity<ApiResponse<ProgramDto>> createProgram(@Valid @RequestBody CreateProgramRequest request) {
@@ -45,5 +55,6 @@ public class OrganizationController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
+
     }
 }
