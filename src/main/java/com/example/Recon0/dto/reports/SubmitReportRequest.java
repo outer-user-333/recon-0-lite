@@ -1,5 +1,6 @@
 package com.example.Recon0.dto.reports;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.UUID;
 
 @Data
 public class SubmitReportRequest {
-    @NotEmpty
+    @NotNull
     private UUID programId;
     @NotEmpty
     private String title;

@@ -1,6 +1,7 @@
 package com.example.Recon0.web;
 
 import com.example.Recon0.dto.ApiResponse;
+import com.example.Recon0.dto.reports.ReportDetailDto;
 import com.example.Recon0.dto.reports.ReportDto;
 import com.example.Recon0.dto.reports.SubmitReportRequest;
 import com.example.Recon0.services.ReportService;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/reports")
@@ -39,5 +41,15 @@ public class ReportController {
         // Add @PreAuthorize("hasRole('hacker')") for security
         List<ReportDto> reports = reportService.getMyReports();
         return ResponseEntity.ok(ApiResponse.success(reports));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ReportDetailDto>> getReportById(@PathVariable("id") UUID id) {
+        ReportDetailDto reportDetails = reportService.getReportDetails(id);
+        ApiResponse<ReportDetailDto> response = ApiResponse.<ReportDetailDto>builder()
+                .success(true)
+                .data(reportDetails)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }

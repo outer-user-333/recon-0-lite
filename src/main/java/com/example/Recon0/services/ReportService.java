@@ -51,6 +51,7 @@ public class ReportService {
         Report report = new Report();
         report.setReporter(getCurrentUser());
         report.setProgram(program);
+        report.setProgramId(request.getProgramId());
         report.setTitle(request.getTitle());
         report.setSeverity(request.getSeverity());
         report.setDescription(request.getDescription());
@@ -95,11 +96,11 @@ public class ReportService {
         // Security Check: Ensure the person fetching is either the reporter or part of the program's organization
         // This is a simplified check. A real implementation would be more robust.
         boolean isReporter = report.getReporter().getId().equals(currentUser.getId());
-        // boolean isOrgMember = report.getProgram().getOrganization().getOwnerId().equals(currentUser.getId());
+        boolean isOrgMember = report.getProgram().getOrganization().getOwner().equals(currentUser);
 
-        // if (!isReporter && !isOrgMember) {
-        //     throw new SecurityException("You do not have permission to view this report.");
-        // }
+        if (!isReporter && !isOrgMember) {
+          throw new SecurityException("You do not have permission to view this report.");
+         }
 
         return ReportDetailDto.fromReport(report);
     }
