@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class LeaderboardEntryDto {
     private int rank;
     private String username;
-    private int reputationPoints;
+    private int reputation_points;
 }
 

@@ -45,17 +45,17 @@ public class ReportService {
     @Transactional
     public ReportDetailDto submitReport(SubmitReportRequest request) {
         User currentUser = getCurrentUser();
-        Program program = programRepository.findById(request.getProgramId())
+        Program program = programRepository.findById(request.getProgram_id())
                 .orElseThrow(() -> new RuntimeException("Program not found"));
 
         Report report = new Report();
         report.setReporter(getCurrentUser());
         report.setProgram(program);
-        report.setProgramId(request.getProgramId());
+        report.setProgramId(request.getProgram_id());
         report.setTitle(request.getTitle());
         report.setSeverity(request.getSeverity());
         report.setDescription(request.getDescription());
-        report.setStepsToReproduce(request.getStepsToReproduce());
+        report.setSteps_to_reproduce(request.getSteps_to_reproduce());
         report.setImpact(request.getImpact());
 
         // Save the main report first to get its ID
@@ -67,9 +67,9 @@ public class ReportService {
             for (var attDto : request.getAttachments()) {
                 ReportAttachment attachment = new ReportAttachment();
                 attachment.setReport(savedReport);
-                attachment.setFileUrl(attDto.getUrl());
-                attachment.setFileName(attDto.getName());
-                attachment.setFileType(attDto.getType());
+                attachment.setFile_url(attDto.getUrl());
+                attachment.setFile_name(attDto.getName());
+                attachment.setFile_type(attDto.getType());
                 attachments.add(attachment);
             }
             reportAttachmentRepository.saveAll(attachments);
@@ -96,11 +96,28 @@ public class ReportService {
         // Security Check: Ensure the person fetching is either the reporter or part of the program's organization
         // This is a simplified check. A real implementation would be more robust.
         boolean isReporter = report.getReporter().getId().equals(currentUser.getId());
-        boolean isOrgMember = report.getProgram().getOrganization().getOwner().equals(currentUser);
+        boolean isOrgMember = report.getProgram().getOrganization_id().equals(currentUser);
 
-        if (!isReporter && !isOrgMember) {
+        if (!isReporter  && !isOrgMember ) {
           throw new SecurityException("You do not have permission to view this report.");
          }
+
+        return ReportDetailDto.fromReport(report);
+    }
+    @Transactional(readOnly = true)
+    public ReportDetailDto getReport() {
+        User currentUser = getCurrentUser();
+        Report report = reportRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        // Security Check: Ensure the person fetching is either the reporter or part of the program's organization
+        // This is a simplified check. A real implementation would be more robust.
+        boolean isReporter = report.getReporter().getId().equals(currentUser.getId());
+        boolean isOrgMember = report.getProgram().getOrganization_id().equals(currentUser);
+
+        if (!isReporter  && !isOrgMember ) {
+            throw new SecurityException("You do not have permission to view this report.");
+        }
 
         return ReportDetailDto.fromReport(report);
     }

@@ -13,42 +13,42 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ReportDetailDto extends ReportDto {
-    private UUID programId;
+    private UUID program_id;
     private String description;
-    private String stepsToReproduce;
+    private String steps_to_reproduce;
     private String impact;
     private List<AttachmentDetailDto> attachments;
 
     @Data
     public static class AttachmentDetailDto {
         private UUID id;
-        private String fileUrl;
-        private String fileName;
-        private String fileType;
-        private OffsetDateTime uploadedAt;
+        private String file_url;
+        private String file_name;
+        private String file_type;
+        private OffsetDateTime uploaded_at;
     }
 
     public static ReportDetailDto fromReport(Report report) {
         ReportDetailDto dto = new ReportDetailDto();
         // Base fields
         dto.setId(report.getId());
-        dto.setProgramName(report.getProgram().getTitle());
+        dto.setProgram_name(report.getProgram().getTitle());
         dto.setTitle(report.getTitle());
         dto.setSeverity(report.getSeverity());
         dto.setStatus(report.getStatus());
-        dto.setCreatedAt(report.getCreatedAt());
+        dto.setCreated_at(report.getCreated_at());
         // Detail fields
-        dto.setProgramId(report.getProgram().getId());
+        dto.setProgram_id(report.getProgram().getId());
         dto.setDescription(report.getDescription());
-        dto.setStepsToReproduce(report.getStepsToReproduce());
+        dto.setSteps_to_reproduce(report.getSteps_to_reproduce());
         dto.setImpact(report.getImpact());
         dto.setAttachments(report.getAttachments().stream().map(attachment -> {
             AttachmentDetailDto attDto = new AttachmentDetailDto();
             attDto.setId(attachment.getId());
-            attDto.setFileUrl(attachment.getFileUrl());
-            attDto.setFileName(attachment.getFileName());
-            attDto.setFileType(attachment.getFileType());
-            attDto.setUploadedAt(attachment.getUploadedAt());
+            attDto.setFile_url(attachment.getFile_url());
+            attDto.setFile_name(attachment.getFile_name());
+            attDto.setFile_type(attachment.getFile_type());
+            attDto.setUploaded_at(attachment.getUploaded_at());
             return attDto;
         }).collect(Collectors.toList()));
         return dto;

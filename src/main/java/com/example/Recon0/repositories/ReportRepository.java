@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface ReportRepository extends JpaRepository<Report, UUID> {
     long countByReporter(User reporter);
     long countByReporterAndStatus(User reporterId, String status);
+
+
     List<Report> findByReporter(User reporter);
 
     /**
@@ -22,7 +24,7 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
      * @param reporterId The ID of the user (reporter).
      * @return The sum of bounties, or null if there are no accepted reports.
      */
-    @Query("SELECT SUM(p.minBounty) FROM Report r JOIN r.program p WHERE r.reporter.id = :reporterId AND r.status = 'Accepted'")
+    @Query("SELECT SUM(p.min_bounty) FROM Report r JOIN r.program p WHERE r.reporter.id = :reporterId AND r.status = 'Accepted'")
     Integer sumBountiesForAcceptedReports(@Param("reporterId") UUID reporterId);
 
 }

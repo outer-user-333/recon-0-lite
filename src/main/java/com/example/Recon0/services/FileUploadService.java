@@ -5,7 +5,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.Recon0.dto.FileUploadResponse;
 import com.example.Recon0.models.Organization;
 import com.example.Recon0.models.User;
-import com.example.Recon0.repositories.OrganizationRepository;
+//import com.example.Recon0.repositories.OrganizationRepository;
 import com.example.Recon0.repositories.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,11 +22,11 @@ import java.util.UUID;
 public class FileUploadService {
     private final Cloudinary cloudinary;
     private final UserRepository userRepository;
-    private final OrganizationRepository organizationRepository;
+    //private final OrganizationRepository organizationRepository;
 
-    public FileUploadService(UserRepository userRepository,OrganizationRepository organizationRepository,Cloudinary cloudinary) {
+    public FileUploadService(UserRepository userRepository,Cloudinary cloudinary) {
         this.userRepository = userRepository;
-        this.organizationRepository =  organizationRepository;
+        //this.organizationRepository =  organizationRepository;
         this.cloudinary=cloudinary;
 
     }
@@ -45,7 +45,7 @@ public class FileUploadService {
             case "avatar":
                 return uploadAvatar(file, getCurrentUser());
             case "logo":
-                return uploadOrganizationLogo(file, getCurrentUser());
+                 return uploadAvatar(file, getCurrentUser());
             case "attachment":
                 return uploadGenericAttachment(file);
             default:
@@ -65,7 +65,7 @@ public class FileUploadService {
         String secureUrl = (String) uploadResult.get("secure_url");
 
         // Update user's profile and save
-        user.setAvatarUrl(secureUrl);
+        user.setAvatar_url(secureUrl);
         userRepository.save(user);
 
         return FileUploadResponse.builder()
@@ -75,37 +75,37 @@ public class FileUploadService {
                 .build();
     }
 
-    private FileUploadResponse uploadOrganizationLogo(MultipartFile file, User user) throws IOException {
-        // Ensure the user has the 'organization' role
-        if (!"organization".equalsIgnoreCase(user.getRole())) {
-            throw new SecurityException("User does not have permission to upload an organization logo.");
-        }
-
-        // Find the organization associated with this user
-        // This assumes a method findByOwnerId exists in OrganizationRepository
-        Organization organization = organizationRepository.findByOwnerId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Organization not found for the current user."));
-
-        // Upload to a specific folder 'logos' with the organization's ID as the public ID
-        Map<String, Object> options = ObjectUtils.asMap(
-                "folder", "logos",
-                "public_id", organization.getId().toString(),
-                "overwrite", true,
-                "resource_type", "image"
-        );
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-        String secureUrl = (String) uploadResult.get("secure_url");
-
-        // Update organization's logo URL and save
-        organization.setLogoUrl(secureUrl);
-        organizationRepository.save(organization);
-
-        return FileUploadResponse.builder()
-                .success(true)
-                .message("Logo uploaded successfully!")
-                .secure_url(secureUrl)
-                .build();
-    }
+//    private FileUploadResponse uploadOrganizationLogo(MultipartFile file, User user) throws IOException {
+//        // Ensure the user has the 'organization' role
+//        if (!"organization".equalsIgnoreCase(user.getRole())) {
+//            throw new SecurityException("User does not have permission to upload an organization logo.");
+//        }
+//
+//        // Find the organization associated with this user
+//        // This assumes a method findByOwnerId exists in OrganizationRepository
+//        Organization organization = organizationRepository.findByOwnerId(user.getId())
+//                .orElseThrow(() -> new RuntimeException("Organization not found for the current user."));
+//
+//        // Upload to a specific folder 'logos' with the organization's ID as the public ID
+//        Map<String, Object> options = ObjectUtils.asMap(
+//                "folder", "logos",
+//                "public_id", organization.getId().toString(),
+//                "overwrite", true,
+//                "resource_type", "image"
+//        );
+//        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+//        String secureUrl = (String) uploadResult.get("secure_url");
+//
+//        // Update organization's logo URL and save
+//        organization.setLogoUrl(secureUrl);
+//        organizationRepository.save(organization);
+//
+//        return FileUploadResponse.builder()
+//                .success(true)
+//                .message("Logo uploaded successfully!")
+//                .secure_url(secureUrl)
+//                .build();
+//    }
 
     private FileUploadResponse uploadGenericAttachment(MultipartFile file) throws IOException {
         // Upload attachments to a generic 'attachments' folder with a random public ID

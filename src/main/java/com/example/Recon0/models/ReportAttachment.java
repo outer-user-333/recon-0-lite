@@ -19,11 +19,11 @@ public class ReportAttachment {
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
 
-    private String fileUrl;
-    private String fileName;
-    private String fileType;
+    private String file_url;
+    private String file_name;
+    private String file_type;
 
     @CreationTimestamp
-    private OffsetDateTime uploadedAt;
+    private OffsetDateTime uploaded_at;
 }
 

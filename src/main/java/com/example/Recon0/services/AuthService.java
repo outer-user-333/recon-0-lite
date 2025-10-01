@@ -6,7 +6,7 @@ import com.example.Recon0.dto.RegisterRequest;
 import com.example.Recon0.dto.UserDto;
 import com.example.Recon0.models.Organization;
 import com.example.Recon0.models.User;
-import com.example.Recon0.repositories.OrganizationRepository;
+//import com.example.Recon0.repositories.OrganizationRepository;
 import com.example.Recon0.repositories.UserRepository;
 import com.example.Recon0.security.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,15 +27,15 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
-    private final OrganizationRepository organizationRepository;
+   // private final OrganizationRepository organizationRepository;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserDetailsService userDetailsService, JwtUtil jwtUtil,OrganizationRepository organizationRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserDetailsService userDetailsService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
-        this.organizationRepository=organizationRepository;
+        //this.organizationRepository=organizationRepository;
     }
 
     @Transactional // Make this transactional to ensure both save or none do
@@ -51,7 +51,7 @@ public class AuthService {
                 .email(registerRequest.getEmail())
                 .username(registerRequest.getUsername())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .fullName(registerRequest.getFullName())
+                .full_name(registerRequest.getFullName())
                 .role(registerRequest.getRole())
                 .status("Active")
                 .build();
@@ -59,7 +59,7 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         // If the role is 'organization', create and link the organization
-        if ("organization".equalsIgnoreCase(savedUser.getRole())) {
+       /* if ("organization".equalsIgnoreCase(savedUser.getRole())) {
             if (registerRequest.getOrganizationName() == null || registerRequest.getOrganizationName().isBlank()) {
                 throw new IllegalArgumentException("Organization name is required for organization role.");
             }
@@ -68,7 +68,7 @@ public class AuthService {
                     .owner(savedUser) // LINK THE USER HERE
                     .build();
             organizationRepository.save(organization);
-        }
+        }*/
 
         String token = jwtUtil.generateToken(savedUser);
 

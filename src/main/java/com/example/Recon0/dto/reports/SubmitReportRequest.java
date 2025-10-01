@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 public class SubmitReportRequest {
     @NotNull
-    private UUID programId;
+    private UUID program_id;
     @NotEmpty
     private String title;
     @NotEmpty
@@ -17,7 +17,7 @@ public class SubmitReportRequest {
     @NotEmpty
     private String description;
     @NotEmpty
-    private String stepsToReproduce;
+    private String steps_to_reproduce;
     @NotEmpty
     private String impact;
     private List<AttachmentDto> attachments;

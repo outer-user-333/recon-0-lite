@@ -14,11 +14,11 @@ public class CreateProgramRequest {
     private String policy;
     @NotEmpty
     private String scope;
-    private String outOfScope;
+    private String out_of_scope;
     @NotNull
-    private Integer minBounty;
+    private Integer min_bounty;
     @NotNull
-    private Integer maxBounty;
+    private Integer max_bounty;
     private String[] tags;
 }
 

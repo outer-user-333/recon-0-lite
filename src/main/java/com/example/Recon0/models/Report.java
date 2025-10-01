@@ -29,6 +29,8 @@ public class Report {
     @JoinColumn(name = "program_id", insertable = false, updatable = false)
     private Program program;
 
+    private String program_name;
+
     @ManyToOne(fetch = FetchType.LAZY)   // <-- Important
     @JoinColumn(name = "reporter_id")
     private User reporter;
@@ -39,13 +41,13 @@ public class Report {
     private String description;
 
     @Column(name = "steps_to_reproduce")
-    private String stepsToReproduce;
+    private String steps_to_reproduce;
 
     private String impact;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private OffsetDateTime created_at;
 
     /**
      * Represents the one-to-many relationship between a report and its attachments.

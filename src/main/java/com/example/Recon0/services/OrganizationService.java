@@ -8,7 +8,7 @@ import com.example.Recon0.models.Organization;
 import com.example.Recon0.models.Program;
 import com.example.Recon0.models.Report;
 import com.example.Recon0.models.User;
-import com.example.Recon0.repositories.OrganizationRepository;
+//import com.example.Recon0.repositories.OrganizationRepository;
 import com.example.Recon0.repositories.ProgramRepository;
 import com.example.Recon0.repositories.ReportRepository;
 import com.example.Recon0.repositories.UserRepository;
@@ -25,13 +25,13 @@ import java.util.stream.Collectors;
 @Service
 public class OrganizationService {
 
-    private final OrganizationRepository organizationRepository;
+    //private final OrganizationRepository organizationRepository;
     private final ProgramRepository programRepository;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
 
-    public OrganizationService(OrganizationRepository organizationRepository, ProgramRepository programRepository, ReportRepository reportRepository, UserRepository userRepository) {
-        this.organizationRepository = organizationRepository;
+    public OrganizationService(  ProgramRepository programRepository, ReportRepository reportRepository, UserRepository userRepository) {
+        //this.organizationRepository = organizationRepository;
         this.programRepository = programRepository;
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
@@ -42,12 +42,12 @@ public class OrganizationService {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
-    private Organization getCurrentUsersOrganization() {
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // Assuming a user is linked to one primary organization
-        return organizationRepository.findByOwnerId(currentUser.getId())
-                .orElseThrow(() -> new IllegalStateException("The current user is not associated with any organization."));
-    }
+//    private Organization getCurrentUsersOrganization() {
+//        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        // Assuming a user is linked to one primary organization
+//        return organizationRepository.findByOwnerId(currentUser.getId())
+//                .orElseThrow(() -> new IllegalStateException("The current user is not associated with any organization."));
+//    }
 
     @Transactional(readOnly = true)
     public OrgDashboardDto getDashboard() {
@@ -66,18 +66,19 @@ public class OrganizationService {
     @Transactional
     public ProgramDto createProgram(CreateProgramRequest request) {
         User currentUser = getCurrentUser();
-        Organization org = organizationRepository.findByOwnerId(currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Organization not found for current user"));
+//        Organization org = organizationRepository.findByOwnerId(currentUser.getId())
+//                .orElseThrow(() -> new RuntimeException("Organization not found for current user"));
 
         Program program = new Program();
-        program.setOrganization(org);
+        program.setOrganization_id(currentUser);
+        program.setOrg_name(currentUser.getFull_name());
         program.setTitle(request.getTitle());
         program.setDescription(request.getDescription());
         program.setPolicy(request.getPolicy());
         program.setScope(request.getScope());
-        program.setOutOfScope(request.getOutOfScope());
-        program.setMinBounty(request.getMinBounty());
-        program.setMaxBounty(request.getMaxBounty());
+        program.setOut_of_scope(request.getOut_of_scope());
+        program.setMin_bounty(request.getMin_bounty());
+        program.setMax_bounty(request.getMax_bounty());
         program.setTags(request.getTags());
 
         Program savedProgram = programRepository.save(program);
@@ -86,7 +87,7 @@ public class OrganizationService {
 
     @Transactional(readOnly = true)
     public List<ProgramDto> getMyPrograms() {
-        Organization organization = getCurrentUsersOrganization();
+        User organization = getCurrentUser();
         List<Program> programs = programRepository.findByOrganization(organization);
 
         return programs.stream()

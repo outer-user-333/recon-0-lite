@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatsDto {
-    private int reputationPoints;
-    private int reportsSubmitted;
-    private int reportsAccepted;
-    private int bountiesEarned;
+    private int reputation_points;
+    private int reports_submitted;
+    private int reports_accepted;
+    private int bounties_earned;
 }

@@ -12,11 +12,11 @@ public class ProfileDto {
     private UUID id;
     private String email;
     private String username;
-    private String fullName;
+    private String full_name;
     private String role;
     private String status;
-    private Integer reputationPoints;
-    private String avatarUrl;
+    private Integer reputation_points;
+    private String avatar_url;
     private String bio;
-    private OffsetDateTime createdAt;
+    private OffsetDateTime created_at;
 }

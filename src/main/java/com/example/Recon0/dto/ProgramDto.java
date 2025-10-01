@@ -7,24 +7,24 @@ import java.util.UUID;
 @Data
 public class ProgramDto {
     private UUID id;
-    private UUID organizationId;
-    private String orgName;
+    private UUID organization_id;
+    private String org_name;
     private String title;
-    private Integer minBounty;
-    private Integer maxBounty;
+    private Integer min_bounty;
+    private Integer max_bounty;
     private String[] tags;
-    private String orgLogoUrl;
+    private String org_logo_url;
 
     public static ProgramDto fromProgram(Program program) {
         ProgramDto dto = new ProgramDto();
         dto.setId(program.getId());
-        dto.setOrganizationId(program.getOrganization().getId());
-        dto.setOrgName(program.getOrganization().getName());
+        dto.setOrganization_id(program.getOrganization_id().getId());
+        dto.setOrg_name(program.getOrganization_id().getFull_name());
         dto.setTitle(program.getTitle());
-        dto.setMinBounty(program.getMinBounty());
-        dto.setMaxBounty(program.getMaxBounty());
+        dto.setMin_bounty(program.getMin_bounty());
+        dto.setMax_bounty(program.getMax_bounty());
         dto.setTags(program.getTags());
-        dto.setOrgLogoUrl(program.getOrganization().getLogoUrl());
+        //dto.setOrgLogoUrl(program.getOrganization().getLogoUrl());
         return dto;
     }
 }

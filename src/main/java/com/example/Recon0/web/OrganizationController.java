@@ -5,8 +5,10 @@ import com.example.Recon0.dto.ProgramDto;
 import com.example.Recon0.dto.organization.CreateProgramRequest;
 import com.example.Recon0.dto.organization.OrgDashboardDto;
 import com.example.Recon0.dto.organization.UpdateReportStatusRequest;
+import com.example.Recon0.dto.reports.ReportDetailDto;
 import com.example.Recon0.dto.reports.ReportDto;
 import com.example.Recon0.services.OrganizationService;
+import com.example.Recon0.services.ReportService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,11 @@ import java.util.UUID;
 public class OrganizationController {
 
     private final OrganizationService organizationService;
+    private final  ReportService reportService;
 
-    public OrganizationController(OrganizationService organizationService) {
+    public OrganizationController(OrganizationService organizationService, ReportService reportService) {
         this.organizationService = organizationService;
+        this.reportService =reportService;
     }
 
     @GetMapping("/dashboard")
@@ -56,5 +60,18 @@ public class OrganizationController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
 
+    }
+    @GetMapping("/reports")
+    public ResponseEntity<ApiResponse<ReportDetailDto>> getReport() {
+        try {
+            ReportDetailDto reportDetails = reportService.getReport();
+            ApiResponse<ReportDetailDto> response = ApiResponse.<ReportDetailDto>builder()
+                    .success(true)
+                    .data(reportDetails)
+                    .build();
+            return ResponseEntity.ok(response);
+        }catch(RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 }

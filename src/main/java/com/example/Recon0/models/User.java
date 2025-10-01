@@ -38,7 +38,7 @@ public class User implements UserDetails { // Implement the UserDetails interfac
         private String password;
 
         @Column(name = "full_name")
-        private String fullName;
+        private String full_name;
         private String role;
         private String status;
         private String bio;
@@ -47,18 +47,18 @@ public class User implements UserDetails { // Implement the UserDetails interfac
         private int reputationPoints;
 
         @Column(name = "avatar_url")
-        private String avatarUrl;
+        private String avatar_url;
 
         @CreationTimestamp
         @Column(name = "created_at", nullable = false, updatable = false)
-        private OffsetDateTime createdAt;
+        private OffsetDateTime created_at;
 
         @CreationTimestamp
         @Column(name = "updated_at", nullable = false)
-        private OffsetDateTime updatedAt;
+        private OffsetDateTime updated_at;
 
-        @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-        private List<Organization> organizations = new ArrayList<>();
+       // @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+        // private List<Organization> organizations = new ArrayList<>();
 
 
 

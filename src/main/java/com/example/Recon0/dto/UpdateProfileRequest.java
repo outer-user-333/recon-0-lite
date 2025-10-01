@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class UpdateProfileRequest {
     @Size(min = 1)
-    private String fullName;
+    private String full_name;
 
     @Size(min = 3)
     private String username;

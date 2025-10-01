@@ -32,19 +32,19 @@ public class ProfileService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .fullName(user.getFullName())
+                .full_name(user.getFull_name())
                 .role(user.getRole())
                 .status(user.getStatus())
-                .reputationPoints(user.getReputationPoints())
-                .avatarUrl(user.getAvatarUrl())
+                .reputation_points(user.getReputationPoints())
+                .avatar_url(user.getAvatar_url())
                 .bio(user.getBio())
-                .createdAt(user.getCreatedAt())
+                .created_at(user.getCreated_at())
                 .build();
     }
 
     public ProfileDto updateCurrentUserProfile(UpdateProfileRequest request) {
         User user = getCurrentUser();
-        user.setFullName(request.getFullName());
+        user.setFull_name(request.getFull_name());
         user.setUsername(request.getUsername());
         user.setBio(request.getBio());
         User updatedUser = userRepository.save(user);
@@ -59,10 +59,10 @@ public class ProfileService {
         Integer bountiesEarned = reportRepository.sumBountiesForAcceptedReports(user.getId());
 
         return StatsDto.builder()
-                .reputationPoints(user.getReputationPoints())
-                .reportsSubmitted((int) reportsSubmitted)
-                .reportsAccepted((int) reportsAccepted)
-                .bountiesEarned(bountiesEarned != null ? bountiesEarned : 0)
+                .reputation_points(user.getReputationPoints())
+                .reports_submitted((int) reportsSubmitted)
+                .reports_accepted((int) reportsAccepted)
+                .bounties_earned(bountiesEarned != null ? bountiesEarned : 0)
                 .build();
     }
 }

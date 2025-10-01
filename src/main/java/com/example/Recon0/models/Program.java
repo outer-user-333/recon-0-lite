@@ -19,7 +19,9 @@ public class Program {
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
-    private Organization organization;
+    private User organization_id;
+
+    private String org_name;
 
     @Column(nullable = false)
     private String title;
@@ -30,11 +32,11 @@ public class Program {
 
     private String scope;
 
-    private String outOfScope;
+    private String out_of_scope;
 
-    private Integer minBounty;
+    private Integer min_bounty;
 
-    private Integer maxBounty;
+    private Integer max_bounty;
 
     @Column(columnDefinition = "text[]")
     private String[] tags;
