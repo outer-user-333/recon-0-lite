@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Our combined User model for authentication and profile data
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  password          String // We will store a hashed password here
+  fullName          String?   @map("full_name")
+  role              Role      // Uses the Role enum defined below
+  status            Status    @default(Active) // Uses the Status enum
+  bio               String?
+  reputationPoints  Int       @default(0) @map("reputation_points")
+  avatarUrl         String?   @map("avatar_url")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("users") // This model maps to a table named "users" in the database
+}
+
+enum Role {
+  hacker
+  organization
+  admin
+}
+
+enum Status {
+  Active
+  Suspended
+}
