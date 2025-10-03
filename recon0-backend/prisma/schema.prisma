@@ -28,6 +28,10 @@ model User {
     // RELATION: A user with role 'organization' has one Organization profile
   organization      Organization?
 
+    // NEW RELATIONS
+  submittedReports  Report[]
+  sentMessages      ReportMessage[]
+
   @@map("users") // This model maps to a table named "users" in the database
 }
 
@@ -64,7 +68,78 @@ model Program {
   organization  Organization @relation(fields: [organizationId], references: [id])
   organizationId String      @map("organization_id")
 
+// NEW RELATION
+  reports         Report[]
+
   @@map("programs")
+}
+
+// --- ADD ALL THE FOLLOWING NEW MODELS ---
+
+model Report {
+  id                  String    @id @default(uuid())
+  title               String
+  severity            String
+  status              String    @default("New")
+  description         String?
+  stepsToReproduce    String?   @map("steps_to_reproduce")
+  impact              String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relation to the Program it was submitted to
+  program             Program   @relation(fields: [programId], references: [id])
+  programId           String    @map("program_id")
+
+  // Relation to the User (hacker) who reported it
+  reporter            User      @relation(fields: [reporterId], references: [id])
+  reporterId          String    @map("reporter_id")
+
+  attachments         ReportAttachment[]
+  messages            ReportMessage[]
+
+  @@map("reports")
+}
+
+model ReportAttachment {
+  id          String    @id @default(uuid())
+  fileUrl     String    @map("file_url")
+  fileName    String?   @map("file_name")
+  fileType    String?   @map("file_type")
+  uploadedAt  DateTime  @default(now()) @map("uploaded_at")
+
+  report      Report    @relation(fields: [reportId], references: [id])
+  reportId    String    @map("report_id")
+
+  @@map("report_attachments")
+}
+
+model ReportMessage {
+  id          String    @id @default(uuid())
+  content     String
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  report      Report    @relation(fields: [reportId], references: [id])
+  reportId    String    @map("report_id")
+
+  sender      User      @relation(fields: [senderId], references: [id])
+  senderId    String    @map("sender_id")
+
+  attachments MessageAttachment[]
+
+  @@map("report_messages")
+}
+
+model MessageAttachment {
+  id          String    @id @default(uuid())
+  fileUrl     String    @map("file_url")
+  fileName    String?   @map("file_name")
+  fileType    String?   @map("file_type")
+  uploadedAt  DateTime  @default(now()) @map("uploaded_at")
+
+  message     ReportMessage @relation(fields: [messageId], references: [id])
+  messageId   String        @map("message_id")
+
+  @@map("message_attachments")
 }
 
 

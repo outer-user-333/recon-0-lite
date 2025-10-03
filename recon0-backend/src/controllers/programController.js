@@ -79,3 +79,31 @@ export const getAllPrograms = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error.' });
     }
 };
+
+
+
+export const getProgramById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const program = await prisma.program.findUnique({
+            where: { id },
+            include: {
+                organization: {
+                    select: {
+                        name: true,
+                        logoUrl: true,
+                    },
+                },
+            },
+        });
+
+        if (!program) {
+            return res.status(404).json({ success: false, message: 'Program not found.' });
+        }
+
+        res.status(200).json({ success: true, data: program });
+    } catch (error) {
+        console.error('Get program by ID error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+};
