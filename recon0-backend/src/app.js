@@ -6,6 +6,7 @@ import 'dotenv/config'; // Ensures .env variables are loaded
 // Import routes
 import authRoutes from './routes/authRoutes.js'; // <-- ADD THIS LINE
 import userRoutes from './routes/userRoutes.js'; // <-- ADD THIS
+import programRoutes from './routes/programRoutes.js'; // <-- ADD THIS
 
 // Create the Express app
 const app = express();
@@ -26,6 +27,8 @@ app.use('/api/v1/auth', authRoutes); // <-- ADD THIS LINE
 
 // Use user routes
 app.use('/api/v1', userRoutes); // <-- ADD THIS
+
+app.use('/api/v1/programs', programRoutes); // <-- ADD THIS
 
 // --- SERVER START ---
 app.listen(PORT, () => {

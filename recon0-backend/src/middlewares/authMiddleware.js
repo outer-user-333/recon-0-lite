@@ -18,3 +18,24 @@ export const authenticateToken = (req, res, next) => {
         next(); // Proceed to the next function in the chain (the controller)
     });
 };
+
+
+
+export const authorizeRole = (allowedRoles) => {
+    return (req, res, next) => {
+        // Ensure authenticateToken has run first
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: 'Authentication required.' });
+        }
+
+        const userRole = req.user.role;
+        if (Array.isArray(allowedRoles) && allowedRoles.includes(userRole)) {
+            next(); // User has one of the allowed roles, proceed
+        } else if (userRole === allowedRoles) {
+             next(); // User has the single allowed role, proceed
+        }
+        else {
+            res.status(403).json({ success: false, message: 'Forbidden: You do not have the required permissions.' });
+        }
+    };
+};

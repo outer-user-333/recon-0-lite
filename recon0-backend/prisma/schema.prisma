@@ -25,8 +25,48 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
+    // RELATION: A user with role 'organization' has one Organization profile
+  organization      Organization?
+
   @@map("users") // This model maps to a table named "users" in the database
 }
+
+// ADD THIS NEW MODEL
+model Organization {
+  id          String    @id @default(uuid())
+  name        String
+  websiteUrl  String?   @map("website_url")
+  logoUrl     String?   @map("logo_url")
+
+  // RELATION: An Organization is owned by one User
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @unique @map("user_id")
+
+  // RELATION: An Organization can have many Programs
+  programs    Program[]
+
+  @@map("organizations")
+}
+
+// ADD THIS NEW MODEL
+model Program {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  policy        String?
+  scope         String?
+  outOfScope    String?   @map("out_of_scope")
+  minBounty     Int?      @map("min_bounty")
+  maxBounty     Int?      @map("max_bounty")
+  tags          String[]
+
+  // RELATION: A Program belongs to one Organization
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  organizationId String      @map("organization_id")
+
+  @@map("programs")
+}
+
 
 enum Role {
   hacker
